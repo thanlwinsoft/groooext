@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- oor:name must be identical to the filename of this xcs file //-->
+<oor:component-schema xmlns:oor="http://openoffice.org/2001/registry"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  oor:name="GraphiteOptions"
+  oor:package="org.sil.graphite" xml:lang="en-US">
+    <info>
+        <author>Keith Stribley</author>
+        <desc>Contains the options data used for the Graphite OpenOffice extension.</desc>
+    </info>
+    <templates>
+        <group oor:name="Leaf">
+            <info>
+                <desc>Graphite Options</desc>
+            </info>
+        </group>
+    </templates>
+    <component>
+        <group oor:name="Leaves">
+            <group oor:name="Graphite" type="Leaf">
+                <prop oor:name="graphiteEnabled" oor:type="xs:short">
+                   <value>1</value>
+                </prop>
+            </group>
+        </group>
+    </component>
+</oor:component>
+

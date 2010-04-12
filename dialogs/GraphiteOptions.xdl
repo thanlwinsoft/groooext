@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="172" dlg:height="157" dlg:help-text="&amp;0.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;1.GraphiteOptions.Title">
+ <dlg:bulletinboard>
+  <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="4" dlg:top="7" dlg:width="164" dlg:height="145" dlg:help-text="&amp;2.GraphiteOptions.GraphiteFrameControl.HelpText">
+   <dlg:title dlg:value="&amp;3.GraphiteOptions.GraphiteFrameControl.Label"/>
+  </dlg:titledbox>
+  <dlg:checkbox dlg:id="EnableGraphiteCheckBox" dlg:tab-index="1" dlg:left="9" dlg:top="21" dlg:width="156" dlg:height="11" dlg:help-text="&amp;4.GraphiteOptions.EnableGraphiteCheckBox.HelpText" dlg:value="&amp;5.GraphiteOptions.EnableGraphiteCheckBox.Label" dlg:checked="false"/>
+  <dlg:text dlg:id="EnableGraphiteLabel" dlg:tab-index="2" dlg:left="9" dlg:top="35" dlg:width="156" dlg:height="65" dlg:help-text="&amp;6.GraphiteOptions.EnableGraphiteLabel.HelpText" dlg:value="&amp;7.GraphiteOptions.EnableGraphiteLabel.Label" dlg:multiline="true"/>
+ </dlg:bulletinboard>
+</dlg:window>
