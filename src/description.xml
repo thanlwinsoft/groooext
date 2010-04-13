@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <description xmlns="http://openoffice.org/extensions/description/2006" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <version value="0.0"/>
+    <version value="@graphiteooo_VERSION_MAJOR@.@graphiteooo_VERSION_MINOR@"/>
     <identifier value="org.sil.graphite.GraphiteOptions"/>
     <dependencies>
         <OpenOffice.org-minimal-version xmlns:d="http://openoffice.org/extensions/description/2006" d:name="OpenOffice.org 3.2" value="3.2"/>
     </dependencies>
     <display-name>
-        <name lang="en">Graphite Font Options page</name>
+        <name lang="en">Graphite Font Options</name>
     </display-name>
     <publisher>
-        <name lang="en" xlink:href="http://api.openoffice.org/">OpenOffice.org</name>
+        <name lang="en" xlink:href="http://www.thanlwinsoft.org/">ThanLwinSoft.org</name>
     </publisher>
 </description>
-

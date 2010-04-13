@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
-<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="172" dlg:height="157" dlg:help-text="&amp;0.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;1.GraphiteOptions.Title">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="200" dlg:height="180" dlg:help-text="&amp;0.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;1.GraphiteOptions.Title" dlg:withtitlebar="false">
  <dlg:bulletinboard>
   <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="4" dlg:top="7" dlg:width="164" dlg:height="145" dlg:help-text="&amp;2.GraphiteOptions.GraphiteFrameControl.HelpText">
    <dlg:title dlg:value="&amp;3.GraphiteOptions.GraphiteFrameControl.Label"/>

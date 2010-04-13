@@ -33,12 +33,14 @@
 #undef _MSC_VER
 #endif
 
+#include <cstdio>
+
 #include "sal/typesizes.h"
 #include "sal/config.h"
 #include "uno/lbnames.h"
+#include "rtl/string.hxx"
 #include "cppu/macros.hxx"
 #include "cppuhelper/factory.hxx"
-#include "cppuhelper/implementationentry.hxx"
 #include "cppuhelper/implbase4.hxx"
 #include "com/sun/star/lang/XInitialization.hpp"
 #include "com/sun/star/frame/XDispatch.hpp"
@@ -46,20 +48,10 @@
 #include "com/sun/star/frame/XDispatchProvider.hpp"
 #include "com/sun/star/frame/XFrame.hpp"
 
+#include "GraphiteAddOn.hxx"
+
 namespace org { namespace sil { namespace graphite { class GraphiteAddOn; } } }
 
-// component helper namespace
-//namespace comp_org::sil::graphite::GraphiteAddOn {
-namespace org { namespace sil { namespace graphite {
-
-namespace css = ::com::sun::star;
-
-// component and service helper functions:
-::rtl::OUString SAL_CALL _getImplementationName();
-css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames();
-css::uno::Reference< css::uno::XInterface > SAL_CALL _create( css::uno::Reference< css::uno::XComponentContext > const & context );
-
-}}} // closing component helper namespace
 
 namespace css = ::com::sun::star;
 
@@ -107,6 +99,7 @@ org::sil::graphite::GraphiteAddOn::GraphiteAddOn(css::uno::Reference< css::uno::
 // ::com::sun::star::lang::XInitialization:
 void SAL_CALL org::sil::graphite::GraphiteAddOn::initialize( const css::uno::Sequence< css::uno::Any >& aArguments ) throw (css::uno::Exception, css::uno::RuntimeException)
 {
+    printf("GraphiteAddOn::initialize\n");
     css::uno::Reference < css::frame::XFrame > xFrame;
     if ( aArguments.getLength() ) {
         aArguments[0] >>= xFrame;
@@ -119,6 +112,9 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
 {
     if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") == 0 )
     {
+		rtl::OString pathString(32);
+		aURL.Path.convertToString(&pathString, RTL_TEXTENCODING_UTF8, 32);
+        printf("Command=%s\n", pathString.getStr());
         if ( aURL.Path.equalsAscii("GraphiteOptionCommand") )
         {
                 // add your own code here
@@ -140,12 +136,15 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::removeStatusListener( const css
 // com.sun.star.uno.XServiceInfo:
 ::rtl::OUString SAL_CALL org::sil::graphite::GraphiteAddOn::getImplementationName() throw (css::uno::RuntimeException)
 {
-    return org::sil::graphite::_getImplementationName();
+    return org::sil::graphite::graphiteaddon::_getImplementationName();
 }
 
 ::sal_Bool SAL_CALL org::sil::graphite::GraphiteAddOn::supportsService(::rtl::OUString const & serviceName) throw (css::uno::RuntimeException)
 {
-    css::uno::Sequence< ::rtl::OUString > serviceNames = org::sil::graphite::_getSupportedServiceNames();
+    rtl::OString serviceNameString(32);
+    serviceName.convertToString(&serviceNameString, RTL_TEXTENCODING_UTF8, 32);
+    printf("Command=%s\n", serviceNameString.getStr());
+    css::uno::Sequence< ::rtl::OUString > serviceNames = org::sil::graphite::graphiteaddon::_getSupportedServiceNames();
     for (::sal_Int32 i = 0; i < serviceNames.getLength(); ++i) {
         if (serviceNames[i] == serviceName)
             return sal_True;
@@ -155,7 +154,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::removeStatusListener( const css
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::GraphiteAddOn::getSupportedServiceNames() throw (css::uno::RuntimeException)
 {
-    return org::sil::graphite::_getSupportedServiceNames();
+    return org::sil::graphite::graphiteaddon::_getSupportedServiceNames();
 }
 
 // ::com::sun::star::frame::XDispatchProvider:
@@ -189,7 +188,7 @@ css::uno::Sequence< css::uno::Reference< css::frame::XDispatch > > SAL_CALL org:
 
 
 // component helper namespace
-namespace org { namespace sil { namespace graphite {
+namespace org { namespace sil { namespace graphite { namespace graphiteaddon {
 
 ::rtl::OUString SAL_CALL _getImplementationName() {
     return ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(
@@ -198,6 +197,7 @@ namespace org { namespace sil { namespace graphite {
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
 {
+    printf("GraphiteAddOn _getSupportedServiceNames\n");
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(
         "com.sun.star.frame.ProtocolHandler"));
@@ -211,31 +211,4 @@ css::uno::Reference< css::uno::XInterface > SAL_CALL _create(
     return static_cast< ::cppu::OWeakObject * >(new org::sil::graphite::GraphiteAddOn(context));
 }
 
-}}} // closing component helper namespace
-
-static ::cppu::ImplementationEntry const entries[] = {
-    { &org::sil::graphite::_create,
-      &org::sil::graphite::_getImplementationName,
-      &org::sil::graphite::_getSupportedServiceNames,
-      &::cppu::createSingleComponentFactory, 0, 0 },
-    { 0, 0, 0, 0, 0, 0 }
-};
-
-extern "C" void SAL_CALL component_getImplementationEnvironment(
-    const char ** envTypeName, uno_Environment **)
-{
-    *envTypeName = CPPU_CURRENT_LANGUAGE_BINDING_NAME;
-}
-
-extern "C" void * SAL_CALL component_getFactory(
-    const char * implName, void * serviceManager, void * registryKey)
-{
-    return ::cppu::component_getFactoryHelper(
-        implName, serviceManager, registryKey, entries);
-}
-
-extern "C" sal_Bool SAL_CALL component_writeInfo(
-    void * serviceManager, void * registryKey)
-{
-    return ::cppu::component_writeInfoHelper(serviceManager, registryKey, entries);
-}
+}}}} // closing component helper namespace
