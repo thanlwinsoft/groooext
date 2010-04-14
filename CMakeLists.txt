@@ -38,7 +38,9 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
 # add the library
-add_library(graphiteooo src/graphiteooo.cxx src/GraphiteAddOn.cxx src/DialogEventHandler.cxx)
+add_library(graphiteooo src/UnixEnvironmentSetter.cpp src/graphiteooo.cxx src/GraphiteAddOn.cxx
+    src/DialogEventHandler.cxx src/ApplicationEventListener.cxx
+    src/SetEnvJob.cxx)
 
 # just use one sample IDL header since we compile them in one go
 set_source_files_properties(src/GraphiteAddOn.cxx OBJECT_DEPENDS
@@ -55,6 +57,8 @@ target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_SAL})
 
 set(ZIP_FILES dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions_en_US.properties dialogs/GraphiteOptions.xdl
     registry/schema/org/sil/graphite/GraphiteOptions.xcs registry/data/org/openoffice/Office/Addons.xcu
+    registry/data/org/openoffice/Office/Events.xcu
+    registry/data/org/openoffice/Office/Jobs.xcu
     registry/data/org/openoffice/Office/OptionsDialog.xcu registry/data/org/openoffice/Office/ProtocolHandler.xcu
     META-INF/manifest.xml description.xml
     graphiteooo.uno${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -78,6 +82,12 @@ add_custom_target(copy_files
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Addons.xcu
 		${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Addons.xcu
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Events.xcu
+        ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Events.xcu
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Jobs.xcu
+        ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Jobs.xcu
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/ProtocolHandler.xcu
 		${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/ProtocolHandler.xcu

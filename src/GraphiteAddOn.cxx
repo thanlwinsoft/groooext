@@ -94,7 +94,9 @@ private:
 
 org::sil::graphite::GraphiteAddOn::GraphiteAddOn(css::uno::Reference< css::uno::XComponentContext > const & context) :
     m_xContext(context)
-{}
+{
+    printf("GraphiteAddOn constructor\n");
+}
 
 // ::com::sun::star::lang::XInitialization:
 void SAL_CALL org::sil::graphite::GraphiteAddOn::initialize( const css::uno::Sequence< css::uno::Any >& aArguments ) throw (css::uno::Exception, css::uno::RuntimeException)
@@ -110,7 +112,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::initialize( const css::uno::Seq
 // ::com::sun::star::frame::XDispatch:
 void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL& aURL, const css::uno::Sequence< css::beans::PropertyValue >& aArguments ) throw(css::uno::RuntimeException)
 {
-    if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") == 0 )
+    if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") )
     {
 		rtl::OString pathString(32);
 		aURL.Path.convertToString(&pathString, RTL_TEXTENCODING_UTF8, 32);
@@ -119,6 +121,10 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
         {
                 // add your own code here
                 return;
+        }
+        if ( aURL.Path.equalsAscii("ApplicationEventHandler") )
+        {
+            
         }
     }
 }
@@ -160,14 +166,22 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::GraphiteAddOn
 // ::com::sun::star::frame::XDispatchProvider:
 css::uno::Reference< css::frame::XDispatch > SAL_CALL org::sil::graphite::GraphiteAddOn::queryDispatch( const css::util::URL& aURL, const ::rtl::OUString& sTargetFrameName, sal_Int32 nSearchFlags ) throw(css::uno::RuntimeException)
 {
+    ::rtl::OString utfPath(128);
+    ::rtl::OString utfProtocol(128);
+    aURL.Path.convertToString(&utfPath, RTL_TEXTENCODING_UTF8, 32);
+    aURL.Protocol.convertToString(&utfProtocol, RTL_TEXTENCODING_UTF8, 32);
+    printf("GraphiteAddOn::queryDispatch %s %s frame %d\n", utfProtocol.getStr(), utfPath.getStr(), m_xFrame.is());
     css::uno::Reference< css::frame::XDispatch > xRet;
     if ( !m_xFrame.is() )
         return 0;
 
-    if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") == 0 )
+    if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") )
     {
-        if ( aURL.Path.equalsAscii("GraphiteOptionCommand") == 0 )
+        if ( aURL.Path.equalsAscii("GraphiteOptionCommand") )
+        {
+            printf("returning dispatch\n");
             xRet = this;
+        }
     }
     return xRet;
 }
@@ -175,6 +189,7 @@ css::uno::Reference< css::frame::XDispatch > SAL_CALL org::sil::graphite::Graphi
 css::uno::Sequence< css::uno::Reference< css::frame::XDispatch > > SAL_CALL org::sil::graphite::GraphiteAddOn::queryDispatches( const css::uno::Sequence< css::frame::DispatchDescriptor >& seqDescripts ) throw(css::uno::RuntimeException)
 {
     sal_Int32 nCount = seqDescripts.getLength();
+    printf("GraphiteAddOn::queryDispatches %ld\n", nCount);
     css::uno::Sequence< css::uno::Reference< css::frame::XDispatch > > lDispatcher(nCount);
 
     for( sal_Int32 i=0; i<nCount; ++i ) {
@@ -192,7 +207,7 @@ namespace org { namespace sil { namespace graphite { namespace graphiteaddon {
 
 ::rtl::OUString SAL_CALL _getImplementationName() {
     return ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(
-        "org::sil::graphite::GraphiteAddOn"));
+        "org.sil.graphite.GraphiteAddOn"));
 }
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
@@ -201,6 +216,8 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(
         "com.sun.star.frame.ProtocolHandler"));
+//    s[1] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(
+//        "com.sun.star.lang.XInitialization"));
     return s;
 }
 

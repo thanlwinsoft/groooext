@@ -30,15 +30,21 @@
  ************************************************************************/
 
 #include <cstdio>
+#include <cstdlib>
 
 #include "sal/typesizes.h"
 #include "sal/config.h"
+//#include "cppuhelper/bootstrap.hxx" //?
 #include "cppuhelper/implementationentry.hxx"
 #include "cppuhelper/implbase1.hxx"
+#include "cppuhelper/queryinterface.hxx"
+#include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XComponentContext.hpp"
+#include "com/sun/star/awt/XControlContainer.hpp"
 #include "com/sun/star/awt/XContainerWindowEventHandler.hpp"
 #include "com/sun/star/awt/XCheckBox.hpp"
 
+#include "graphiteooo.hxx"
 #include "DialogEventHandler.hxx"
 
 namespace org { namespace sil { namespace graphite { class DialogEventHandler; }}}
@@ -65,22 +71,25 @@ private:
 
     static const ::rtl::OUString ENABLE_GRAPHITE_EVENT;
     static const ::rtl::OUString EXTERNAL_EVENT;
+    static const ::rtl::OUString ENABLE_GRAPHITE_CHECKBOX;
     // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::DialogEventHandler() {}
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
 };
 
-static const ::rtl::OUString ENABLE_GRAPHITE_EVENT(RTL_CONSTASCII_USTRINGPARAM("enableGraphiteChanged"));
-static const ::rtl::OUString EXTERNAL_EVENT(RTL_CONSTASCII_USTRINGPARAM("external_event"));
+const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_EVENT(RTL_CONSTASCII_USTRINGPARAM("enableGraphiteChanged"));
+const ::rtl::OUString org::sil::graphite::DialogEventHandler::EXTERNAL_EVENT(RTL_CONSTASCII_USTRINGPARAM("external_event"));
+const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_CHECKBOX(RTL_CONSTASCII_USTRINGPARAM("EnableGraphiteCheckBox"));
+
 
 org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context) :
     m_xContext(context)
-{}
+{
+    printf("DialogEventHandler constructor\n");
+}
 
 // ::com::sun::star::awt::XContainerWindowEventHandler:
 ::sal_Bool SAL_CALL org::sil::graphite::DialogEventHandler::callHandlerMethod(const css::uno::Reference< css::awt::XWindow > & xWindow, const ::com::sun::star::uno::Any & EventObject, const ::rtl::OUString & MethodName) throw (css::uno::RuntimeException, css::lang::WrappedTargetException)
 {
-    // TODO: Exchange the default return implementation for "callHandlerMethod" !!!
-    // Exchange the default return implementation.
     rtl::OString aMethodName(128);
     MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, 128);
     printf("callHandlerMethod(%s)\n", aMethodName.getStr());
@@ -100,14 +109,33 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
     if (eventObject.has< ::rtl::OUString >() )
     {
         ::rtl::OUString eventValue = eventObject.get< ::rtl::OUString >();
+        css::uno::Reference< css::awt::XCheckBox > xCheckBox = getGraphiteEnabledCheckBox(xWindow);
+        if (!xCheckBox.is())
+        {
+            printf("Failed to get graphite enabled checkbox");
+            return sal_False;
+        }
         if (eventValue.equalsAscii("ok"))
         {
-            // TODO
+            printf("Graphite enable checkbox %d\n", xCheckBox.get()->getState());
+            if (xCheckBox.get()->getState())
+            {
+                unsetenv(SAL_DISABLE_GRAPHITE);
+            }
+            else
+            {
+                if (setenv(SAL_DISABLE_GRAPHITE, "1", 1))
+                    printf("Failed to set %s\n", SAL_DISABLE_GRAPHITE);
+            }
             return sal_True;
         }
         else if (eventValue.equalsAscii("back") || eventValue.equalsAscii("initialize"))
         {
-            // TODO
+            const char * pDisableGraphiteStr = getenv(SAL_DISABLE_GRAPHITE);
+            if (pDisableGraphiteStr == NULL || pDisableGraphiteStr[0]=='0')
+                xCheckBox.get()->setState(1); // is the state a com.sun.star.util.TriState?
+            else
+                xCheckBox.get()->setState(0);
             return sal_True;
         }
         printf("DialogEventHandler::externalEvent Unexpected\n");
@@ -115,17 +143,19 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
     return sal_False;
 }
 
-css::uno::Reference< ::com::sun::star::awt::XCheckBox >
+css::uno::Reference< css::awt::XCheckBox >
 org::sil::graphite::DialogEventHandler::getGraphiteEnabledCheckBox(const css::uno::Reference< css::awt::XWindow > & xWindow)
 {
-    
-    
+    css::uno::Reference< css::awt::XControlContainer > xControlContainer(xWindow, css::uno::UNO_QUERY);
+    if (xControlContainer.is() == sal_False)
+        return css::uno::Reference< css::awt::XCheckBox>(NULL);
+    css::uno::Reference< css::awt::XControl > xControl = xControlContainer.get()->getControl(ENABLE_GRAPHITE_CHECKBOX);
+    css::uno::Reference< css::awt::XCheckBox > xCheckBox(xControl, css::uno::UNO_QUERY);
+    return xCheckBox;
 }
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::DialogEventHandler::getSupportedMethodNames() throw (css::uno::RuntimeException)
 {
-    // TODO: Exchange the default return implementation for "getSupportedMethodNames" !!!
-    // Exchange the default return implementation.
     // NOTE: Default initialized polymorphic structs can cause problems because of
     // missing default initialization of primitive types of some C++ compilers or
     // different Any initialization in Java and C++ polymorphic structs.
