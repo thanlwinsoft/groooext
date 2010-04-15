@@ -45,6 +45,9 @@
 #include "com/sun/star/awt/XCheckBox.hpp"
 
 #include "graphiteooo.hxx"
+#ifdef SAL_UNX
+#include "UnixEnvironmentSetter.hxx"
+#endif
 #include "DialogEventHandler.hxx"
 
 namespace org { namespace sil { namespace graphite { class DialogEventHandler; }}}
@@ -120,12 +123,16 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             printf("Graphite enable checkbox %d\n", xCheckBox.get()->getState());
             if (xCheckBox.get()->getState())
             {
-                unsetenv(SAL_DISABLE_GRAPHITE);
+                //unsetenv(SAL_DISABLE_GRAPHITE);
+#ifdef SAL_UNX
+                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::BASHRC, SAL_DISABLE_GRAPHITE, "0");
+#endif
             }
             else
             {
-                if (setenv(SAL_DISABLE_GRAPHITE, "1", 1))
-                    printf("Failed to set %s\n", SAL_DISABLE_GRAPHITE);
+#ifdef SAL_UNX
+                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::BASHRC, SAL_DISABLE_GRAPHITE, "1");
+#endif
             }
             return sal_True;
         }

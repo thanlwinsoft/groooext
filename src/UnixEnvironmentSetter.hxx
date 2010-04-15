@@ -21,7 +21,8 @@ namespace org { namespace sil { namespace graphite {
     class UnixEnvironmentSetter
     {
         public:
-            static bool parseFile(const char * var, const char * value);
+            static bool parseFile(const char * file, const char * var, const char * value);
+            static const char * BASHRC;
     };
 
 }}}

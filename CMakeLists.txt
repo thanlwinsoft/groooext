@@ -38,9 +38,13 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 endif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
 # add the library
-add_library(graphiteooo src/UnixEnvironmentSetter.cpp src/graphiteooo.cxx src/GraphiteAddOn.cxx
+add_library(graphiteooo src/UnixEnvironmentSetter.cxx src/graphiteooo.cxx src/GraphiteAddOn.cxx
     src/DialogEventHandler.cxx src/ApplicationEventListener.cxx
     src/SetEnvJob.cxx)
+
+add_executable(test_unixenvset src/UnixEnvironmentSetter.cxx src/test_UnixEnvironmentSetter.cxx)
+add_test(NAME "Test test_unixenvset" COMMAND "$<TARGET_FILE:test_unixenvset>")
+enable_testing()
 
 # just use one sample IDL header since we compile them in one go
 set_source_files_properties(src/GraphiteAddOn.cxx OBJECT_DEPENDS
