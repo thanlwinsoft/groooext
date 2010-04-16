@@ -19,7 +19,7 @@
     <component>
         <group oor:name="Leaves">
             <group oor:name="Graphite" type="Leaf">
-                <prop oor:name="graphiteEnabled" oor:type="xs:short">
+                <prop oor:name="graphiteEnabled" oor:type="xs:boolean">
                    <value>1</value>
                 </prop>
             </group>

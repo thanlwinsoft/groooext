@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <description xmlns="http://openoffice.org/extensions/description/2006" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <version value="@graphiteooo_VERSION_MAJOR@.@graphiteooo_VERSION_MINOR@"/>
-    <identifier value="org.sil.graphite.graphiteoptions"/>
+    <version value="@graphiteooo_VERSION_MAJOR@.@graphiteooo_VERSION_MINOR@.@MERCURIAL_VERSION@"/>
+    <!-- Identifier should match that used for the AddOn service -->
+    <identifier value="org.sil.graphite.GraphiteOptions"/>
     <dependencies>
         <OpenOffice.org-minimal-version xmlns:d="http://openoffice.org/extensions/description/2006" d:name="OpenOffice.org 3.2" value="3.2"/>
     </dependencies>

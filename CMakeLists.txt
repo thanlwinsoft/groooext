@@ -6,6 +6,9 @@ enable_language(CXX C)
 set (graphiteooo_VERSION_MAJOR 0)
 set (graphiteooo_VERSION_MINOR 0)
 
+execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION)
+string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
+
 # configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
@@ -37,9 +40,15 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	set(BUILD_SHARED_LIBS on)
 endif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    add_definitions(-DGROOO_DEBUG=1)
+endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+
 # add the library
-add_library(graphiteooo src/UnixEnvironmentSetter.cxx src/graphiteooo.cxx src/GraphiteAddOn.cxx
-    src/DialogEventHandler.cxx src/ApplicationEventListener.cxx
+add_library(graphiteooo src/UnixEnvironmentSetter.cxx
+    src/graphiteooo.cxx src/GraphiteAddOn.cxx
+    src/DialogEventHandler.cxx
+    src/GraphiteConfiguration.cxx
     src/SetEnvJob.cxx)
 
 add_executable(test_unixenvset src/UnixEnvironmentSetter.cxx src/test_UnixEnvironmentSetter.cxx)

@@ -34,7 +34,6 @@
 #include "graphiteooo.hxx"
 #include "GraphiteAddOn.hxx"
 #include "DialogEventHandler.hxx"
-#include "ApplicationEventListener.hxx"
 #include "SetEnvJob.hxx"
 
 const char * org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE";
@@ -48,10 +47,6 @@ static ::cppu::ImplementationEntry const entries[] = {
     { &org::sil::graphite::dialogeventhandler::_create,
       &org::sil::graphite::dialogeventhandler::_getImplementationName,
       &org::sil::graphite::dialogeventhandler::_getSupportedServiceNames,
-      &::cppu::createSingleComponentFactory, 0, 0 },
-    { &org::sil::graphite::applicationeventlistener::_create,
-      &org::sil::graphite::applicationeventlistener::_getImplementationName,
-      &org::sil::graphite::applicationeventlistener::_getSupportedServiceNames,
       &::cppu::createSingleComponentFactory, 0, 0 },
     { &org::sil::graphite::setenvjob::_create,
       &org::sil::graphite::setenvjob::_getImplementationName,
@@ -70,7 +65,9 @@ extern "C" void SAL_CALL component_getImplementationEnvironment(
 extern "C" void * SAL_CALL component_getFactory(
     const char * implName, void * serviceManager, void * registryKey)
 {
+#ifdef GROOO_DEBUG
     printf("component_getFactory %s\n", implName);
+#endif
     return ::cppu::component_getFactoryHelper(
         implName, serviceManager, registryKey, entries);
 }
