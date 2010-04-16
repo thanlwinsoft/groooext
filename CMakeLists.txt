@@ -19,6 +19,9 @@ configure_file (
 # add the binary tree to the search path for include files
 include_directories("${PROJECT_BINARY_DIR}")
 
+find_package(Freetype)
+find_package(PkgConfig)
+
 # OO_SDK_URE_HOME is setup using the setsdkenv_* scripts
 find_path(OO_SDK_IDL com/sun/star/udk-modules.idl PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES idl DOC "OO IDL directory")
 find_path(OO_SDK_INCLUDE udkversion.mk PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES include DOC "OO SDK include directory")
@@ -29,12 +32,14 @@ find_path(OO_SDK_RDB types.rdb PATHS ENV OO_SDK_URE_HOME PATH_SUFFIXES share/mis
 find_path(OO_BASIS_PROGRAM offapi.rdb PATHS ENV OO_SDK_HOME PATH_SUFFIXES ../program DOC "Basis Program directory")
 find_program(ZIP zip)
 
-include_directories ("${OO_SDK_INCLUDE}")
+include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
 
 # Set the OOo Platform defines
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	add_definitions(-DSAL_UNX=1 -DCPPU_ENV=gcc3)
 	set(BUILD_SHARED_LIBS on)
+	pkg_check_modules(FC REQUIRED fontconfig)
+	add_definitions(${FC_CFLAGS})
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	add_definitions(-DSAL_W32=1)
 	set(BUILD_SHARED_LIBS on)
@@ -48,11 +53,16 @@ endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 add_library(graphiteooo src/UnixEnvironmentSetter.cxx
     src/graphiteooo.cxx src/GraphiteAddOn.cxx
     src/DialogEventHandler.cxx
+    src/GraphiteFontInfo.cxx
     src/GraphiteConfiguration.cxx
     src/SetEnvJob.cxx)
 
 add_executable(test_unixenvset src/UnixEnvironmentSetter.cxx src/test_UnixEnvironmentSetter.cxx)
 add_test(NAME "Test test_unixenvset" COMMAND "$<TARGET_FILE:test_unixenvset>")
+
+add_executable(test_graphitefontinfo src/GraphiteFontInfo.cxx src/test_GraphiteFontInfo.cxx)
+add_test(NAME "Test test_graphitefontinfo" COMMAND "$<TARGET_FILE:test_unixenvset>")
+
 enable_testing()
 
 # just use one sample IDL header since we compile them in one go
@@ -66,11 +76,11 @@ add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/com/sun/star/lang/XInitializatio
 # clean the headers generated from IDL
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_BINARY_DIR}/com;${PROJECT_BINARY_DIR}/cppu;${PROJECT_BINARY_DIR}/msforms;${PROJECT_BINARY_DIR}/ooo;${PROJECT_BINARY_DIR}/drafts")
 
-target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_SAL})
+target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_CPPU} ${FREETYPE_LIBRARIES} ${FC_LIBRARIES})
+target_link_libraries(test_graphitefontinfo ${FREETYPE_LIBRARIES} ${OO_SDK_UNO_SAL} ${FC_LIBRARIES})
 
 set(ZIP_FILES dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions_en_US.properties dialogs/GraphiteOptions.xdl
     registry/schema/org/sil/graphite/GraphiteOptions.xcs registry/data/org/openoffice/Office/Addons.xcu
-    registry/data/org/openoffice/Office/Events.xcu
     registry/data/org/openoffice/Office/Jobs.xcu
     registry/data/org/openoffice/Office/OptionsDialog.xcu registry/data/org/openoffice/Office/ProtocolHandler.xcu
     META-INF/manifest.xml description.xml
@@ -95,9 +105,6 @@ add_custom_target(copy_files
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Addons.xcu
 		${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Addons.xcu
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Events.xcu
-        ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Events.xcu
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Jobs.xcu
         ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Jobs.xcu

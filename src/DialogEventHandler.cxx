@@ -49,6 +49,7 @@
 #include "com/sun/star/awt/MessageBoxButtons.hpp"
 #include "com/sun/star/awt/XMessageBox.hpp"
 #include "com/sun/star/awt/XMessageBoxFactory.hpp"
+#include "com/sun/star/awt/XListBox.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/util/XChangesBatch.hpp"
 
@@ -58,6 +59,7 @@
 #include "UnixEnvironmentSetter.hxx"
 #endif
 #include "DialogEventHandler.hxx"
+#include "GraphiteFontInfo.hxx"
 
 namespace org { namespace sil { namespace graphite { class DialogEventHandler; }}}
 
@@ -81,6 +83,7 @@ private:
 
     css::uno::Reference< css::awt::XCheckBox > getGraphiteEnabledCheckBox(const css::uno::Reference< css::awt::XWindow > & xWindow);
     css::uno::Reference< css::awt::XFixedText > getLabel(const css::uno::Reference< css::awt::XWindow > & xWindow, ::rtl::OUString id);
+    css::uno::Reference< css::awt::XListBox > setupGraphiteFontList(const css::uno::Reference< css::awt::XWindow > & xWindow);
     void showMessage(const css::uno::Reference< css::awt::XWindowPeer > & xWindowPeer, ::rtl::OUString title, ::rtl::OUString message);
 
     static const ::rtl::OUString ENABLE_GRAPHITE_EVENT;
@@ -88,6 +91,7 @@ private:
     static const ::rtl::OUString ENABLE_GRAPHITE_CHECKBOX;
     static const ::rtl::OUString GRAPHITE_ENABLED_LABEL;
     static const ::rtl::OUString GRAPHITE_DISABLED_LABEL;
+    static const ::rtl::OUString GRAPHITE_FONT_LIST;
     // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::DialogEventHandler() {}
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     GraphiteConfiguration m_config;
@@ -97,7 +101,8 @@ const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_EV
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::EXTERNAL_EVENT(RTL_CONSTASCII_USTRINGPARAM("external_event"));
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_CHECKBOX(RTL_CONSTASCII_USTRINGPARAM("EnableGraphiteCheckBox"));
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_ENABLED_LABEL(RTL_CONSTASCII_USTRINGPARAM("GraphiteEnabledLabel"));
-const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_DISABLED_LABEL(RTL_CONSTASCII_USTRINGPARAM("GraphietDisabledLabel"));
+const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_DISABLED_LABEL(RTL_CONSTASCII_USTRINGPARAM("GraphiteDisabledLabel"));
+const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_FONT_LIST(RTL_CONSTASCII_USTRINGPARAM("GraphiteFontListBox"));
 
 
 org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context) :
@@ -222,6 +227,7 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
                 else
                     xCheckBox.get()->setState(0);
             }
+            setupGraphiteFontList(xWindow);
             return sal_True;
         }
 #ifdef GROOO_DEBUG
@@ -269,6 +275,62 @@ void org::sil::graphite::DialogEventHandler::showMessage(const css::uno::Referen
         if (xMsgBox.is())
             xMsgBox.get()->execute();
     }
+}
+
+css::uno::Reference< css::awt::XListBox > 
+org::sil::graphite::DialogEventHandler::setupGraphiteFontList(const css::uno::Reference< css::awt::XWindow > & xWindow)
+{
+    css::uno::Reference< css::awt::XControlContainer > xControlContainer(xWindow, css::uno::UNO_QUERY);
+    if (xControlContainer.is() == sal_False)
+        return css::uno::Reference< css::awt::XListBox>(NULL);
+    css::uno::Reference< css::awt::XControl > xControl = xControlContainer.get()->getControl(GRAPHITE_FONT_LIST);
+    assert(xControl.is());
+    css::uno::Reference< css::awt::XListBox > xListBox(xControl, css::uno::UNO_QUERY);
+    assert(xListBox.is());
+    css::uno::Reference< css::awt::XView > xView(xControl, css::uno::UNO_QUERY);
+    assert(xView.is());
+    // unfortunately the view doesn't have the graphics set on it
+    // css::uno::Reference< css::awt::XGraphics > xGraphics(xView.get()->getGraphics());
+    // assert(xGraphics.is());
+    css::uno::Reference< css::awt::XWindowPeer> xWindowPeer(xControl.get()->getPeer());
+    assert(xWindowPeer.is());
+    css::uno::Reference< css::awt::XToolkit> xToolkit( xWindowPeer.get()->getToolkit());
+    assert(xToolkit.is());
+    // I'm not sure that the size is very important for our purposes
+    css::uno::Reference< css::awt::XDevice > xDevice(xToolkit.get()->createScreenCompatibleDevice(100, 100) );
+    assert(xDevice.is());
+    if (xDevice.is())
+    {
+        GraphiteFontInfo & grFontInfo = GraphiteFontInfo::getFontInfo();
+        css::uno::Sequence< css::awt::FontDescriptor > fontDescriptors = xDevice.get()->getFontDescriptors();
+        css::uno::Sequence< ::rtl::OUString > grFontNames(10);
+        sal_Int32 grFontCount = 0;
+        for (sal_Int32 i = 0; i < fontDescriptors.getLength(); i++)
+        {
+            if (grFontInfo.isGraphiteFont(fontDescriptors[i].Name))
+            {
+#ifdef GROOO_DEBUG
+                rtl::OString aFontName(128);
+                rtl::OString aFontStyleName(128);
+                fontDescriptors[i].Name.convertToString(&aFontName, RTL_TEXTENCODING_UTF8, 128);
+                fontDescriptors[i].StyleName.convertToString(&aFontStyleName, RTL_TEXTENCODING_UTF8, 128);
+                fprintf(stderr, "%s (%s) has graphite tables\n", aFontName.getStr(), aFontStyleName.getStr() );
+#endif
+                // ignore duplicate names
+                if (grFontCount > 0 && grFontNames[grFontCount-1].equals(fontDescriptors[i].Name))
+                    continue;
+                grFontCount++;
+                if (grFontNames.getLength() < grFontCount)
+                {
+                    grFontNames.realloc(grFontNames.getLength() + 10);
+                }
+                grFontNames[grFontCount-1] = fontDescriptors[i].Name;
+            }
+        }
+        grFontNames.realloc(grFontCount);
+        xListBox.get()->addItems(grFontNames, 0);
+    }
+    return xListBox;
 }
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::DialogEventHandler::getSupportedMethodNames() throw (css::uno::RuntimeException)

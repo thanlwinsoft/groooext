@@ -12,6 +12,6 @@
   </dlg:titledbox>
   <dlg:menulist dlg:id="GraphiteFontListBox" dlg:tab-index="4" dlg:left="145" dlg:top="20" dlg:width="105" dlg:height="150" dlg:help-text="&amp;44.GraphiteOptions.GraphiteFontListBox.HelpText"/>
   <dlg:text dlg:id="GraphiteEnabledLabel" dlg:tab-index="5" dlg:left="15" dlg:top="155" dlg:width="100" dlg:height="15" dlg:help-text="&amp;45.GraphiteOptions.GraphiteEnabledLabel.HelpText" dlg:value="&amp;46.GraphiteOptions.GraphiteEnabledLabel.Label"/>
-  <dlg:text dlg:id="GraphietDisabledLabel" dlg:tab-index="6" dlg:visible="false" dlg:left="10" dlg:top="155" dlg:width="120" dlg:height="15" dlg:help-text="&amp;47.GraphiteOptions.GraphietDisabledLabel.HelpText" dlg:value="&amp;48.GraphiteOptions.GraphietDisabledLabel.Label"/>
+  <dlg:text dlg:id="GraphiteDisabledLabel" dlg:tab-index="6" dlg:visible="false" dlg:left="10" dlg:top="155" dlg:width="120" dlg:height="15" dlg:help-text="&amp;47.GraphiteOptions.GraphiteDisabledLabel.HelpText" dlg:value="&amp;48.GraphiteOptions.GraphiteDisabledLabel.Label"/>
  </dlg:bulletinboard>
 </dlg:window>
