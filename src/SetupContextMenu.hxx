@@ -29,10 +29,10 @@
  *
  ************************************************************************/
 
-#ifndef setenvjob_hxx
-#define setenvjob_hxx
+#ifndef SetupContextMenu_hxx
+#define SetupContextMenu_hxx
 // component helper namespace
-namespace org { namespace sil { namespace graphite { namespace setenvjob {
+namespace org { namespace sil { namespace graphite { namespace setupcontextmenu {
 
 namespace css = ::com::sun::star;
 

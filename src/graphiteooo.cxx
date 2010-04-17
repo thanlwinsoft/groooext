@@ -34,7 +34,8 @@
 #include "graphiteooo.hxx"
 #include "GraphiteAddOn.hxx"
 #include "DialogEventHandler.hxx"
-#include "SetEnvJob.hxx"
+#include "FeatureDialogEventHandler.hxx"
+#include "SetupContextMenu.hxx"
 
 const char * org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE";
 
@@ -48,9 +49,9 @@ static ::cppu::ImplementationEntry const entries[] = {
       &org::sil::graphite::dialogeventhandler::_getImplementationName,
       &org::sil::graphite::dialogeventhandler::_getSupportedServiceNames,
       &::cppu::createSingleComponentFactory, 0, 0 },
-    { &org::sil::graphite::setenvjob::_create,
-      &org::sil::graphite::setenvjob::_getImplementationName,
-      &org::sil::graphite::setenvjob::_getSupportedServiceNames,
+    { &org::sil::graphite::setupcontextmenu::_create,
+      &org::sil::graphite::setupcontextmenu::_getImplementationName,
+      &org::sil::graphite::setupcontextmenu::_getSupportedServiceNames,
       &::cppu::createSingleComponentFactory, 0, 0 },
     { 0, 0, 0, 0, 0, 0 }
 };

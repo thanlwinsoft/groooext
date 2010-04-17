@@ -42,13 +42,21 @@
 #include "cppu/macros.hxx"
 #include "cppuhelper/factory.hxx"
 #include "cppuhelper/implbase4.hxx"
+#include "com/sun/star/awt/XTopWindow.hpp"
+#include "com/sun/star/awt/XDialogProvider2.hpp"
+#include "com/sun/star/lang/XMultiComponentFactory.hpp"
+#include "com/sun/star/deployment/PackageInformationProvider.hpp"
+#include "com/sun/star/deployment/XPackageInformationProvider.hpp"
 #include "com/sun/star/lang/XInitialization.hpp"
 #include "com/sun/star/frame/XDispatch.hpp"
 #include "com/sun/star/lang/XServiceInfo.hpp"
 #include "com/sun/star/frame/XDispatchProvider.hpp"
 #include "com/sun/star/frame/XFrame.hpp"
+#include "com/sun/star/uno/Exception.hpp"
+#include "com/sun/star/uno/RuntimeException.hpp"
 
 #include "GraphiteAddOn.hxx"
+#include "FeatureDialogEventHandler.hxx"
 
 namespace org { namespace sil { namespace graphite { class GraphiteAddOn; } } }
 
@@ -89,13 +97,17 @@ private:
     // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::GraphiteAddOn() {}
 
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
+    css::uno::Reference< css::lang::XMultiComponentFactory > m_xFactory;
     css::uno::Reference< css::frame::XFrame > m_xFrame;
+    css::uno::Reference< css::frame::XModel > m_xModel;
 };
 
 org::sil::graphite::GraphiteAddOn::GraphiteAddOn(css::uno::Reference< css::uno::XComponentContext > const & context) :
-    m_xContext(context)
+    m_xContext(context), m_xFactory(context.get()->getServiceManager())
 {
+#ifdef GROOO_DEBUG
     printf("GraphiteAddOn constructor\n");
+#endif
 }
 
 // ::com::sun::star::lang::XInitialization:
@@ -108,6 +120,9 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::initialize( const css::uno::Seq
     if ( aArguments.getLength() ) {
         aArguments[0] >>= xFrame;
         m_xFrame = xFrame;
+        css::uno::Reference < css::frame::XController > xController(m_xFrame.get()->getController());
+        if (xController.is())
+            m_xModel.set(xController.get()->getModel());
     }
 }
 
@@ -125,6 +140,56 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
         {
                 // add your own code here
                 return;
+        }
+        if ( aURL.Path.equalsAscii("contextmenu") )
+        {
+            try
+            {
+                css::uno::Reference< css::deployment::XPackageInformationProvider >
+                    xInfoProvider( css::deployment::PackageInformationProvider::get( m_xContext) );
+                rtl::OUString sLocation = xInfoProvider->getPackageLocation(
+                    rtl::OUString::createFromAscii( "org.sil.graphite.GraphiteOptions" ) );
+                rtl::OString aLocation(128);
+                sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, 128);
+                fprintf(stderr, "AddOn location %s\n", aLocation.getStr());
+                if (m_xModel.is())
+                {
+                    css::uno::Sequence<css::uno::Any> args(1);
+                    args[0] = css::uno::Any(m_xModel);
+                    static const ::rtl::OUString DIALOG_PROVIDER(rtl::OUString::createFromAscii("com.sun.star.awt.DialogProvider2"));
+                    css::uno::Reference<css::uno::XInterface> dialogProvider =
+                        m_xFactory.get()->createInstanceWithArgumentsAndContext(DIALOG_PROVIDER, args, m_xContext);
+                    css::uno::Reference<css::awt::XDialogProvider2> xDialogProvider(dialogProvider, ::css::uno::UNO_QUERY);
+                    if (xDialogProvider.is())
+                    {
+                        fprintf(stderr, "Have dialogprovider\n");
+                        ::rtl::OUString dialogPath(RTL_CONSTASCII_USTRINGPARAM("/dialogs/GraphiteFeatures.xdl"));
+                        ::rtl::OUString dialogUrl(sLocation + dialogPath);
+                        css::uno::Reference<org::sil::graphite::FeatureDialogEventHandler> eventHandler(new org::sil::graphite::FeatureDialogEventHandler(m_xContext, m_xModel));
+                        css::uno::Reference<css::awt::XDialogEventHandler> xDialogEventHandler(eventHandler, css::uno::UNO_QUERY);
+                        css::uno::Reference<css::awt::XDialog> xDialog(
+                            xDialogProvider.get()->createDialogWithHandler(dialogUrl, xDialogEventHandler));
+                        if (xDialog.is())
+                        {
+                            css::uno::Reference<css::awt::XTopWindow> xTopWindow(xDialog, css::uno::UNO_QUERY);
+                            css::uno::Reference<css::awt::XTopWindowListener> xTopWindowListener(eventHandler, css::uno::UNO_QUERY);
+                            if (xTopWindow.is())
+                                xTopWindow.get()->addTopWindowListener(xTopWindowListener);
+                            short status = xDialog.get()->execute();
+                            fprintf(stderr, "FeatureDialog returned %d\n", status);
+                            if (xTopWindow.is())
+                                xTopWindow.get()->removeTopWindowListener(xTopWindowListener);
+                        }
+                    }
+                }
+            }
+            catch (css::uno::RuntimeException e)
+            {
+                rtl::OString msg(128);
+                e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+                fprintf(stderr, "Exception %s\n", msg.getStr());
+            }
+            return;
         }
         if ( aURL.Path.equalsAscii("ApplicationEventHandler") )
         {
@@ -185,7 +250,7 @@ css::uno::Reference< css::frame::XDispatch > SAL_CALL org::sil::graphite::Graphi
 
     if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") )
     {
-        if ( aURL.Path.equalsAscii("GraphiteOptionCommand") )
+        if ( aURL.Path.equalsAscii("GraphiteOptionCommand") || aURL.Path.equalsAscii("contextmenu"))
         {
 #ifdef GROOO_DEBUG
             printf("returning dispatch\n");

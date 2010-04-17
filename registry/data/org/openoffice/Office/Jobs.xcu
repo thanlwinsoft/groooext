@@ -2,9 +2,9 @@
   <!DOCTYPE oor:component-data SYSTEM "../../../../component-update.dtd">
   <oor:component-data oor:name="Jobs" oor:package="org.openoffice.Office" xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <node oor:name="Jobs">
-          <node oor:name="SetEnvJob" oor:op="fuse">
+          <node oor:name="SetupContextMenu" oor:op="fuse">
               <prop oor:name="Service">
-                  <value>org.sil.graphite.SetEnvJob</value>
+                  <value>org.sil.graphite.SetupContextMenu</value>
               </prop>
               <node oor:name="Arguments">
                   <prop oor:name="enable" oor:type="xs:string" oor:op="replace">
@@ -14,9 +14,9 @@
           </node>
       </node>
       <node oor:name="Events">
-          <node oor:name="OnStartApp" oor:op="fuse">
+          <node oor:name="onDocumentOpened" oor:op="fuse">
               <node oor:name="JobList">
-                  <node oor:name="SetEnvJob" oor:op="replace"/>
+                  <node oor:name="SetupContextMenu" oor:op="replace"/>
               </node>
           </node>
       </node>
