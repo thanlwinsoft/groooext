@@ -22,7 +22,10 @@ namespace org { namespace sil { namespace graphite {
     {
         public:
             static bool parseFile(const char * file, const char * var, const char * value);
-            static const char * BASHRC;
+            static const char * defaultProfile();
+        private:
+            static const char * PROFILE;
+            static char profile[1024];
     };
 
 }}}

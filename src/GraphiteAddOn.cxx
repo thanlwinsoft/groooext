@@ -165,7 +165,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
                         fprintf(stderr, "Have dialogprovider\n");
                         ::rtl::OUString dialogPath(RTL_CONSTASCII_USTRINGPARAM("/dialogs/GraphiteFeatures.xdl"));
                         ::rtl::OUString dialogUrl(sLocation + dialogPath);
-                        css::uno::Reference<org::sil::graphite::FeatureDialogEventHandler> eventHandler(new org::sil::graphite::FeatureDialogEventHandler(m_xContext, m_xModel));
+                        css::uno::Reference<org::sil::graphite::FeatureDialogEventHandler> eventHandler(new org::sil::graphite::FeatureDialogEventHandler(m_xContext, m_xModel, sLocation));
                         css::uno::Reference<css::awt::XDialogEventHandler> xDialogEventHandler(eventHandler, css::uno::UNO_QUERY);
                         css::uno::Reference<css::awt::XDialog> xDialog(
                             xDialogProvider.get()->createDialogWithHandler(dialogUrl, xDialogEventHandler));

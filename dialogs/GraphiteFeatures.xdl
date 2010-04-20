@@ -3,7 +3,7 @@
 <dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteFeatures" dlg:left="109" dlg:top="58" dlg:width="172" dlg:height="157" dlg:help-text="&amp;63.GraphiteFeatures.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;64.GraphiteFeatures.Title">
  <script:event script:event-name="on-focus" script:macro-name="vnd.sun.star.UNO:grfeaturedialog_focus" script:language="UNO"/>
  <dlg:bulletinboard>
-  <dlg:treecontrol dlg:id="GrFeatureTreeControl" dlg:tab-index="0" dlg:left="0" dlg:top="3" dlg:width="171" dlg:height="134" dlg:help-text="&amp;65.GraphiteFeatures.GrFeatureTreeControl.HelpText" dlg:rootdisplayed="false"/>
+  <dlg:treecontrol dlg:id="GrFeatureTreeControl" dlg:tab-index="0" dlg:left="0" dlg:top="3" dlg:width="171" dlg:height="134" dlg:help-text="&amp;65.GraphiteFeatures.GrFeatureTreeControl.HelpText" dlg:selectiontype="single" dlg:rootdisplayed="false" dlg:showsroothandles="false" dlg:editable="true"/>
   <dlg:button dlg:id="GrFeatureButtonOK" dlg:tab-index="1" dlg:left="97" dlg:top="141" dlg:width="35" dlg:height="13" dlg:help-text="&amp;66.GraphiteFeatures.GrFeatureButtonOK.HelpText" dlg:default="true" dlg:value="&amp;67.GraphiteFeatures.GrFeatureButtonOK.Label" dlg:button-type="ok" dlg:checked="true">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.UNO:grfeaturedialog_ok" script:language="UNO"/>
   </dlg:button>

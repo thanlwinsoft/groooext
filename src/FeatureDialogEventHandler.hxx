@@ -32,17 +32,26 @@
 #ifndef featuredialogeventhandler_hxx
 #define featuredialogeventhandler_hxx
 
+#include <map>
 #include <sal/typesizes.h>
 #include <sal/config.h>
 #include <rtl/string.h>
 #include <rtl/ustring.hxx>
 #include <cppu/unotype.hxx>
-#include <cppuhelper/implbase2.hxx>
+#include <cppuhelper/implbase4.hxx>
 #include "com/sun/star/awt/XDialogEventHandler.hpp"
 #include "com/sun/star/awt/XTopWindowListener.hpp"
+#include "com/sun/star/awt/tree/XMutableTreeDataModel.hpp"
+#include "com/sun/star/awt/tree/XTreeControl.hpp"
+#include "com/sun/star/awt/tree/XTreeEditListener.hpp"
+#include "com/sun/star/view/XSelectionChangeListener.hpp"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/frame/XModel.hpp"
+#include "com/sun/star/frame/XController.hpp"
+
+
+namespace gr { class Font; }
 
 // component helper namespace
 namespace org { namespace sil { namespace graphite { namespace featuredialogeventhandler {
@@ -61,11 +70,12 @@ namespace org { namespace sil { namespace graphite {
 namespace css = ::com::sun::star;
 
 class FeatureDialogEventHandler:
-    public ::cppu::WeakImplHelper2<css::awt::XDialogEventHandler, css::awt::XTopWindowListener>
+    public ::cppu::WeakImplHelper4<css::awt::XDialogEventHandler, css::awt::XTopWindowListener, 
+        css::awt::tree::XTreeEditListener, css::view::XSelectionChangeListener>
 {
 public:
     explicit FeatureDialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context, 
-                                       css::uno::Reference< css::frame::XModel > const & model);
+                                       css::uno::Reference< css::frame::XModel > const & model, ::rtl::OUString const & location);
 
     // ::com::sun::star::awt::XDialogEventHandler:
     virtual ::sal_Bool SAL_CALL callHandlerMethod(const css::uno::Reference< css::awt::XDialog > & xDialog, const ::com::sun::star::uno::Any & EventObject, const ::rtl::OUString & MethodName) throw (css::uno::RuntimeException, css::lang::WrappedTargetException);
@@ -82,10 +92,23 @@ public:
     virtual void SAL_CALL windowNormalized(const css::lang::EventObject & e) throw (css::uno::RuntimeException);
     virtual void SAL_CALL windowActivated(const css::lang::EventObject & e) throw (css::uno::RuntimeException);
     virtual void SAL_CALL windowDeactivated(const css::lang::EventObject & e) throw (css::uno::RuntimeException);
+    
+    // ::com::sun::star::awt::tree::XTreeEditListener
+    virtual void SAL_CALL nodeEditing( const ::com::sun::star::uno::Reference< ::com::sun::star::awt::tree::XTreeNode >& Node ) throw (::com::sun::star::util::VetoException, ::com::sun::star::uno::RuntimeException);
+    virtual void SAL_CALL nodeEdited( const ::com::sun::star::uno::Reference< ::com::sun::star::awt::tree::XTreeNode >& Node, const ::rtl::OUString& NewText ) throw (::com::sun::star::uno::RuntimeException);
+    
+    // ::com::sun::star::view::XSelectionChangeListener
+    virtual void SAL_CALL selectionChanged( const ::com::sun::star::lang::EventObject& aEvent ) throw (::com::sun::star::uno::RuntimeException);
 
 private:
     FeatureDialogEventHandler(const org::sil::graphite::FeatureDialogEventHandler &); // not defined
     FeatureDialogEventHandler& operator=(const org::sil::graphite::FeatureDialogEventHandler &); // not defined
+
+    void setupTreeModel(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel);
+    void addFontFeatures(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel,
+                         css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode,
+                         const ::rtl::OUString & fontKey, const ::rtl::OUString & fontName, const ::rtl::OUString & fontDesc);
+
 
     // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::FeatureDialogEventHandler() {}
     static const ::rtl::OUString OK_EVENT;
@@ -93,10 +116,17 @@ private:
     static const ::rtl::OUString FOCUS_EVENT;
     static const ::rtl::OUString EXTERNAL_EVENT;
     static const ::rtl::OUString TREE_CONTROL;
+    static const ::rtl::OUString ENABLED_ICON;
+    static const ::rtl::OUString DISABLED_ICON;
 
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     css::uno::Reference< css::lang::XMultiComponentFactory > m_xFactory;
     css::uno::Reference< css::frame::XModel > m_xModel;
+    css::uno::Reference< css::frame::XController > m_xController;
+    css::uno::Reference<css::awt::tree::XTreeControl> m_xTree;
+    ::rtl::OUString m_extensionBase;
+    ::gr::Font * m_fonts[3]; // normal, ctl, asian
+    std::map<sal_uInt32, sal_Int32> m_featureSettings[3];
 };
 
 }}}

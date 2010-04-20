@@ -1,4 +1,5 @@
-
+#include <cerrno>
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,15 +11,25 @@
 #include "UnixEnvironmentSetter.hxx"
 
 static const char * ENV_VAR_NAME = "SAL_DISABLE_GRAPHITE";
+static const char * ORIG_HOME = getenv("HOME");
+static const char * SHELL = "/bin/sh";
 
 static int runTest(int num, const char * fileData, const char * value, bool replace)
 {
-    static const char * testfile = "tempbashrc";
-    char filename[1024];
+    static const char * testfile = "temphome";
     char filepath[1024];
-    char command[1024];
-    snprintf(filepath, 1024, "%s/%s%02d", getenv("HOME"), testfile, num);
-    snprintf(filename, 1024, "%s%02d", testfile, num);
+    char homepath[1024];
+    char homeenv[1024];
+    char shTest[1024];
+    char * env[2];
+    snprintf(homepath, 1024, "%s/%s%02d", ORIG_HOME, testfile, num);
+    snprintf(homeenv, 1024, "HOME=%s", homepath);
+    snprintf(filepath, 1024, "%s/.profile", homepath, testfile);
+    // delete if it exists
+    unlink(filepath);
+    rmdir(homepath);
+    int status = mkdir(homepath, 0700);
+    assert(status == 0 || errno == EEXIST);
    FILE * f = NULL;
    if (fileData)
    {
@@ -27,13 +38,13 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
         fwrite(fileData, 1, strlen(fileData), f);
         fclose(f);
    }
-   if (org::sil::graphite::UnixEnvironmentSetter::parseFile(filename, ENV_VAR_NAME, value) != true)
+   if (org::sil::graphite::UnixEnvironmentSetter::parseFile(filepath, ENV_VAR_NAME, value) != true)
    {
-       fprintf(stderr, "Failed to parseFile %s\n", filename);
+       fprintf(stderr, "Failed to parseFile %s\n", filepath);
        return 1;
    }
-   snprintf(command, 1024, "test x$%s == x%s", ENV_VAR_NAME, value);
-   int status = 0;
+   snprintf(shTest, 1024, "test x$%s = x%s; ", ENV_VAR_NAME, value);
+   status = 0;
    int pid = fork();
    if (pid)
    {
@@ -41,7 +52,11 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
    }
    else
    {
-       execl("/bin/bash","--rcfile", filepath, "-c", command, NULL);
+       //setenv("HOME", homepath, 1);
+       env[0] = homeenv;
+       env[1] = NULL;
+       execle(SHELL, SHELL, "-i","-l", "-c", shTest, NULL, env);
+       //execle("/bin/pwd", "/bin/pwd", NULL, env);
    }
    if (!WIFEXITED(status))
    {
@@ -51,7 +66,7 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
    status = WEXITSTATUS(status);
    if (status)
    {
-       fprintf(stderr, "%s\nUnexpected result %d for test #%d\n", command, status, num);
+       fprintf(stderr, "%s -c -l %s\nUnexpected result %d for test #%d\n", SHELL, shTest, status, num);
    }
    else
    {
@@ -67,16 +82,62 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
                return -2;
            }
        }
-       unlink(filepath); // delete file
+       //unlink(filepath); // delete file
+       //rmdir(homepath);
    }
-   
+
    return status;
+}
+
+int testShellTest()
+{
+    int testStatus = 0;
+    int status = 0;
+    const char * env[2];
+    env[0] = "A=1";
+    env[1] = NULL;
+    int pid = fork();
+    if (pid)
+   {
+       waitpid(pid, &status, 0);
+   }
+   else
+   {
+       execle(SHELL, "-i","-l", "-c", "test x$A = x1", NULL, env);
+   }
+   assert(WIFEXITED(status));
+   status = WEXITSTATUS(status);
+   if (status)
+   {
+       testStatus = 1;
+   }
+   else
+   {
+       pid = fork();
+       if (pid)
+        {
+            waitpid(pid, &status, 0);
+        }
+        else
+        {
+            execle(SHELL, "-i","-l", "-c", "test x$A = x0", NULL, env);
+        }
+        assert(WIFEXITED(status));
+        status = WEXITSTATUS(status);
+        if (!status)
+        {
+            testStatus = 1;
+        }
+   }
+   return testStatus;
 }
 
 int main(int argc, char ** argv)
 {
     int status = 0;
     int testNum = 0;
+    status = testShellTest();
+    assert(status == 0);
     // test non existant
     status |= runTest(++testNum, NULL, "0", false);
     status |= runTest(++testNum, NULL, "1", false);
@@ -88,7 +149,7 @@ int main(int argc, char ** argv)
     status |= runTest(++testNum, "export SAL_DISABLE_GRAPHITE=0\n", "1", true);
     status |= runTest(++testNum, "export SAL_DISABLE_GRAPHITE=1\n", "0", true);
     status |= runTest(++testNum, "export SAL_DISABLE_GRAPHITE=1\n", "1", true);
-    
+
     // test with duplicates
     status |= runTest(++testNum, "export SAL_DISABLE_GRAPHITE=0\nexport SAL_DISABLE_GRAPHITE=1\n", "0", true);
     status |= runTest(++testNum, "export SAL_DISABLE_GRAPHITE=0\nexport SAL_DISABLE_GRAPHITE=1\n", "1", true);

@@ -167,14 +167,14 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             {
                 graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_True));
 #ifdef SAL_UNX
-                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::BASHRC, SAL_DISABLE_GRAPHITE, "0");
+                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "0");
 #endif
             }
             else
             {
                 graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_False));
 #ifdef SAL_UNX
-                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::BASHRC, SAL_DISABLE_GRAPHITE, "1");
+                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "1");
 #endif
             }
             css::uno::Reference< css::util::XChangesBatch > batch(m_config.nameAccess(), css::uno::UNO_QUERY);

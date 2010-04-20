@@ -39,6 +39,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	add_definitions(-DSAL_UNX=1 -DCPPU_ENV=gcc3)
 	set(BUILD_SHARED_LIBS on)
 	pkg_check_modules(FC REQUIRED fontconfig)
+	pkg_check_modules(GR REQUIRED silgraphite)
 	add_definitions(${FC_CFLAGS})
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	add_definitions(-DSAL_W32=1)
@@ -76,15 +77,15 @@ add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/com/sun/star/lang/XInitializatio
 # clean the headers generated from IDL
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_BINARY_DIR}/com;${PROJECT_BINARY_DIR}/cppu;${PROJECT_BINARY_DIR}/msforms;${PROJECT_BINARY_DIR}/ooo;${PROJECT_BINARY_DIR}/drafts")
 
-target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_CPPU} ${FREETYPE_LIBRARIES} ${FC_LIBRARIES})
-target_link_libraries(test_graphitefontinfo ${FREETYPE_LIBRARIES} ${OO_SDK_UNO_SAL} ${FC_LIBRARIES})
+target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_CPPU} ${FREETYPE_LIBRARIES} ${FC_LIBRARIES}  ${GR_LIBRARIES})
+target_link_libraries(test_graphitefontinfo ${FREETYPE_LIBRARIES} ${OO_SDK_UNO_SAL} ${FC_LIBRARIES} ${GR_LIBRARIES})
 
 set(ZIP_FILES dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions_en_US.properties dialogs/GraphiteOptions.xdl
     dialogs/GraphiteFeatures_en_US.default dialogs/GraphiteFeatures_en_US.properties dialogs/GraphiteFeatures.xdl
     registry/schema/org/sil/graphite/GraphiteOptions.xcs registry/data/org/openoffice/Office/Addons.xcu
     registry/data/org/openoffice/Office/Jobs.xcu
     registry/data/org/openoffice/Office/OptionsDialog.xcu registry/data/org/openoffice/Office/ProtocolHandler.xcu
-    META-INF/manifest.xml description.xml
+    META-INF/manifest.xml description.xml icons/enabled.png icons/disabled.png
     graphiteooo.uno${CMAKE_SHARED_LIBRARY_SUFFIX}
 #    ${CMAKE_SHARED_LIBRARY_PREFIX}graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
@@ -97,7 +98,11 @@ add_custom_target(copy_files
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/dialogs
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/registry/data/org/sil/graphite
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions.xdl
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/icons/enabled.png
+        ${PROJECT_BINARY_DIR}/icons/enabled.png
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/icons/disabled.png
+        ${PROJECT_BINARY_DIR}/icons/disabled.png
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions.xdl
 		${PROJECT_BINARY_DIR}/dialogs/GraphiteOptions.xdl
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions_en_US.properties 
 		${PROJECT_BINARY_DIR}/dialogs/GraphiteOptions_en_US.properties

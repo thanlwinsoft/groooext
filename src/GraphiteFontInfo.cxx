@@ -20,6 +20,7 @@
 #include <string>
 #include <map>
 #include <cassert>
+#include <graphite/FileFont.h>
 
 #ifdef SAL_UNX
 
@@ -42,6 +43,7 @@ class FTGraphiteFontInfo : public GraphiteFontInfo
         FTGraphiteFontInfo();
         virtual ~FTGraphiteFontInfo();
         virtual sal_Bool isGraphiteFont(const ::rtl::OUString & fontName);
+        virtual gr::Font * loadFont(const ::rtl::OUString & fontName);
     private:
         std::map<std::string, std::string> mFontMap;
         FT_Library mLibrary;
@@ -78,6 +80,26 @@ org::sil::graphite::FTGraphiteFontInfo::~FTGraphiteFontInfo()
     FT_Error status = FT_Done_FreeType(mLibrary);
     assert(status == 0);
     mLibrary = NULL;
+}
+
+gr::Font * org::sil::graphite::FTGraphiteFontInfo::loadFont(const ::rtl::OUString & fontName)
+{
+    ::rtl::OString asciiFontName(MAX_FONT_NAME_SIZE);
+    fontName.convertToString(&asciiFontName, RTL_TEXTENCODING_UTF8, MAX_FONT_NAME_SIZE);
+    if (mFontMap.find(asciiFontName.getStr()) != mFontMap.end())
+    {
+        try
+        {
+            // dpi isn't important since we only want to query the features
+            gr::FileFont * fileFont = new gr::FileFont(mFontMap[asciiFontName.getStr()], 12.0f, 96, 96);
+            return fileFont;
+        }
+        catch (...)
+        {
+            fprintf(stderr, "Failed to create gr::FileFont %s\n", asciiFontName.getStr());
+        }
+    }
+    return NULL;
 }
 
 sal_Bool

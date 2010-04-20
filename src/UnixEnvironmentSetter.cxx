@@ -21,39 +21,43 @@
 #include "UnixEnvironmentSetter.hxx"
 namespace org { namespace sil { namespace graphite {
 
-    const char * UnixEnvironmentSetter::BASHRC = ".bashrc";
+    const char * UnixEnvironmentSetter::PROFILE = ".profile";
+    char UnixEnvironmentSetter::profile[1024];
+
+    const char * UnixEnvironmentSetter::defaultProfile()
+    {
+        snprintf(profile, sizeof(profile), "%s/%s", getenv("HOME"), PROFILE);
+        return profile;
+    }
+
     /**
-    * Parses the .bashrc file looking for the specified variable
+    * Parses the .shellFile file looking for the specified variable
     * if it finds, it it modifes its value, if not it appends it to the end
     * of the file. If the variable is embeded in complicated logic involving
     *  if, while etc it will probably fail to do the correct thing.
     * @param var environment variable name
     * @param value environment variable value
-    * @return true if .bashrc was successfully modfied
+    * @return true if .shellFile was successfully modfied
     */
-    bool UnixEnvironmentSetter::parseFile(const char * file, const char * var, const char * value)
+    bool UnixEnvironmentSetter::parseFile(const char * path, const char * var, const char * value)
     {
-        const char * home = getenv("HOME");
-        if (!home) return false;
         size_t pos = 0;
         size_t varPos = 0;
         size_t varEndPos = 0;
         const static size_t BUFFER_SIZE = 1024;
-        char path[BUFFER_SIZE];
         char buffer[BUFFER_SIZE];
         char search[BUFFER_SIZE];
-        snprintf(path, BUFFER_SIZE, "%s/%s", home, file);
         snprintf(search, BUFFER_SIZE, "export %s=", var);
         printf("Searching for %s\n", search);
-        FILE * bashrc = fopen(path, "r+");
-        if (bashrc == NULL)
+        FILE * shellFile = fopen(path, "r+");
+        if (shellFile == NULL)
         {
-            bashrc = fopen(path, "w+");
+            shellFile = fopen(path, "w+");
         }
         // Failed to read file
-        if (bashrc == NULL) return false;
+        if (shellFile == NULL) return false;
         bool varCorrect = false;
-        size_t bytesRead = fread(buffer, 1, BUFFER_SIZE-1, bashrc);
+        size_t bytesRead = fread(buffer, 1, BUFFER_SIZE-1, shellFile);
         buffer[bytesRead] = '\0';// Null terminate
         while (bytesRead > 0)
         {
@@ -144,7 +148,7 @@ namespace org { namespace sil { namespace graphite {
 #endif
             }
             pos += bytesRead - overlap;
-            bytesRead = fread(buffer + overlap, 1, BUFFER_SIZE-1-overlap, bashrc);
+            bytesRead = fread(buffer + overlap, 1, BUFFER_SIZE-1-overlap, shellFile);
             if (bytesRead == 0) break;
             buffer[bytesRead+overlap] = '\0';// Null terminate
             bytesRead += overlap;
@@ -156,22 +160,22 @@ namespace org { namespace sil { namespace graphite {
 #ifdef GROOO_DEBUG
                 printf("Overwriting old value\n");
 #endif
-                fseek(bashrc, varPos, SEEK_SET);
-                varPos += fwrite(value, 1, strlen(value), bashrc);
+                fseek(shellFile, varPos, SEEK_SET);
+                varPos += fwrite(value, 1, strlen(value), shellFile);
                 while (varPos < varEndPos)
-                    varPos += fwrite("#", 1, 1, bashrc); // pad to end of line with #
+                    varPos += fwrite(" ", 1, 1, shellFile); // pad to end of line with #
             }
             else
             {
-                fseek(bashrc, 0, SEEK_END);
+                fseek(shellFile, 0, SEEK_END);
                 if (bytesRead > 0 && buffer[bytesRead-1] != '\n')
-                    fwrite("\n", 1, 1, bashrc);
+                    fwrite("\n", 1, 1, shellFile);
                 snprintf(search, BUFFER_SIZE, "export %s=%s\n\n", var, value);
-                fwrite(search, 1, strlen(search), bashrc);
+                fwrite(search, 1, strlen(search), shellFile);
             }
         }
-        fflush(bashrc);
-        fclose(bashrc);
+        fflush(shellFile);
+        fclose(shellFile);
         return true;
     }
 

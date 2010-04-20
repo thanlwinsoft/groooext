@@ -21,7 +21,8 @@
 #include "sal/config.h"
 #include "rtl/string.hxx"
 #include "rtl/ustring.hxx"
-
+#include <graphite/GrClient.h>
+#include <graphite/Font.h>
 
 namespace org { namespace sil { namespace graphite {
 
@@ -31,6 +32,7 @@ class GraphiteFontInfo
         GraphiteFontInfo() {};
         virtual ~GraphiteFontInfo() {};
         virtual sal_Bool isGraphiteFont(const ::rtl::OUString & fontName) = 0;
+        virtual gr::Font * loadFont(const ::rtl::OUString & fontName) = 0;
         static GraphiteFontInfo & getFontInfo();
     private:
         static GraphiteFontInfo * sInstance;
