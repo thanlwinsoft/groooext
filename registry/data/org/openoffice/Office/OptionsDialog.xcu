@@ -4,24 +4,28 @@
   xmlns:xs="http://www.w2.org/2001/XMLSchema"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <node oor:name="Nodes">
-      <node oor:name="Writer" oor:op="fuse">
-        <node oor:name="Leaves">
-        <node oor:name="org.sil.graphite.GraphiteOptions" oor:op="fuse">
-            <prop oor:name="Id">
-              <value>org.sil.graphite.GraphiteOptions</value>
-            </prop>
-            <prop oor:name="Label">
-              <value xml:lang="en-US">Graphite Font Options</value>
-            </prop>
-            <prop oor:name="OptionsPage">
-              <value>%origin%/../../../../../dialogs/GraphiteOptions.xdl</value>
-            </prop>
-            <prop oor:name="EventHandlerService">
-              <value>org.sil.graphite.DialogEventHandler</value>
-            </prop>
+        <!-- See svx/source/cui/treeopt.cxx for the names to use here. -->
+        <node oor:name="ProductName" oor:op="fuse">
+            <node oor:name="Leaves">
+                <node oor:name="org.sil.graphite.GraphiteOptions" oor:op="fuse">
+                    <prop oor:name="Id">
+                      <value>org.sil.graphite.GraphiteOptions</value>
+                    </prop>
+                    <prop oor:name="Label">
+                      <value xml:lang="en-US">Graphite Font Options</value>
+                    </prop>
+                    <prop oor:name="OptionsPage">
+                      <value>%origin%/../../../../../dialogs/GraphiteOptions.xdl</value>
+                    </prop>
+                    <prop oor:name="AllModules">
+                        <value>true</value>
+                    </prop>
+                    <prop oor:name="EventHandlerService">
+                      <value>org.sil.graphite.DialogEventHandler</value>
+                    </prop>
+                </node>
+            </node>
         </node>
-      </node>
-      </node>
     </node>
 </oor:component-data>
 
