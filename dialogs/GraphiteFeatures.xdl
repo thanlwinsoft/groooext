@@ -10,5 +10,6 @@
   <dlg:button dlg:id="GrFeatureButtonCancel" dlg:tab-index="2" dlg:left="135" dlg:top="141" dlg:width="33" dlg:height="13" dlg:help-text="&amp;68.GraphiteFeatures.GrFeatureButtonCancel.HelpText" dlg:value="&amp;69.GraphiteFeatures.GrFeatureButtonCancel.Label" dlg:button-type="cancel">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.UNO:grfeaturedialog_cancel" script:language="UNO"/>
   </dlg:button>
+  <dlg:checkbox dlg:id="UpdateStyleCheckBox" dlg:tab-index="3" dlg:left="1" dlg:top="141" dlg:width="73" dlg:height="11" dlg:help-text="&amp;72.GraphiteFeatures.UpdateStyleCheckBox.HelpText" dlg:value="&amp;73.GraphiteFeatures.UpdateStyleCheckBox.Label" dlg:checked="false"/>
  </dlg:bulletinboard>
 </dlg:window>

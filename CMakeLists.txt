@@ -36,7 +36,7 @@ include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
 
 # Set the OOo Platform defines
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-	add_definitions(-DSAL_UNX=1 -DCPPU_ENV=gcc3)
+	add_definitions(-DSAL_UNX=1 -DCPPU_ENV=gcc3 -Wall)
 	set(BUILD_SHARED_LIBS on)
 	pkg_check_modules(FC REQUIRED fontconfig)
 	pkg_check_modules(GR REQUIRED silgraphite)

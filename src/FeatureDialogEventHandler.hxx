@@ -41,9 +41,11 @@
 #include <cppuhelper/implbase4.hxx>
 #include "com/sun/star/awt/XDialogEventHandler.hpp"
 #include "com/sun/star/awt/XTopWindowListener.hpp"
+#include "com/sun/star/awt/XCheckBox.hpp"
 #include "com/sun/star/awt/tree/XMutableTreeDataModel.hpp"
 #include "com/sun/star/awt/tree/XTreeControl.hpp"
 #include "com/sun/star/awt/tree/XTreeEditListener.hpp"
+#include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/view/XSelectionChangeListener.hpp"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
@@ -100,6 +102,18 @@ public:
     // ::com::sun::star::view::XSelectionChangeListener
     virtual void SAL_CALL selectionChanged( const ::com::sun::star::lang::EventObject& aEvent ) throw (::com::sun::star::uno::RuntimeException);
 
+    // set the fontnames with the selected features
+    void setFontNames(void);
+
+
+    enum FontScript {
+        WESTERN_SCRIPT = 0,
+        CTL_SCRIPT = 1,
+        ASIAN_SCRIPT = 2,
+        NUM_SCRIPTS = 3
+    };
+    static const ::rtl::OUString FONT_PROPERTY_NAME[NUM_SCRIPTS];
+
 private:
     FeatureDialogEventHandler(const org::sil::graphite::FeatureDialogEventHandler &); // not defined
     FeatureDialogEventHandler& operator=(const org::sil::graphite::FeatureDialogEventHandler &); // not defined
@@ -107,15 +121,19 @@ private:
     void setupTreeModel(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel);
     void addFontFeatures(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel,
                          css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode,
-                         const ::rtl::OUString & fontKey, const ::rtl::OUString & fontName, const ::rtl::OUString & fontDesc);
+                         FontScript fontScript, const ::rtl::OUString & fontName, const ::rtl::OUString & fontDesc);
+    void initFeatureMap(FontScript fontScript, const ::rtl::OUString & featureDesc);
+    void storeFeatures(void);
 
+    // destructor is private and will be called indirectly by the release call
+    virtual ~FeatureDialogEventHandler() {}
 
-    // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::FeatureDialogEventHandler() {}
     static const ::rtl::OUString OK_EVENT;
     static const ::rtl::OUString CANCEL_EVENT;
     static const ::rtl::OUString FOCUS_EVENT;
     static const ::rtl::OUString EXTERNAL_EVENT;
     static const ::rtl::OUString TREE_CONTROL;
+    static const ::rtl::OUString UPDATE_STYLE_CHECKBOX;
     static const ::rtl::OUString ENABLED_ICON;
     static const ::rtl::OUString DISABLED_ICON;
 
@@ -124,9 +142,12 @@ private:
     css::uno::Reference< css::frame::XModel > m_xModel;
     css::uno::Reference< css::frame::XController > m_xController;
     css::uno::Reference<css::awt::tree::XTreeControl> m_xTree;
+    css::uno::Reference<css::awt::XCheckBox> m_xUpdateStyle;
+    css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
     ::rtl::OUString m_extensionBase;
-    ::gr::Font * m_fonts[3]; // normal, ctl, asian
-    std::map<sal_uInt32, sal_Int32> m_featureSettings[3];
+    ::gr::Font * m_fonts[NUM_SCRIPTS]; // normal, ctl, asian
+    std::map<sal_uInt32, sal_Int32> m_featureSettings[NUM_SCRIPTS];
+    ::rtl::OUString m_fontNamesWithFeatures[NUM_SCRIPTS];
 };
 
 }}}

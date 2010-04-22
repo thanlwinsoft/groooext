@@ -24,7 +24,7 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
     char * env[2];
     snprintf(homepath, 1024, "%s/%s%02d", ORIG_HOME, testfile, num);
     snprintf(homeenv, 1024, "HOME=%s", homepath);
-    snprintf(filepath, 1024, "%s/.profile", homepath, testfile);
+    snprintf(filepath, 1024, "%s/.profile", homepath);
     // delete if it exists
     unlink(filepath);
     rmdir(homepath);
@@ -75,15 +75,15 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
        if (replace)
        {
            stat(filepath, &filestat);
-           if (filestat.st_size != strlen(fileData))
+           if (filestat.st_size != static_cast<int>(strlen(fileData)))
            {
                fprintf(stderr, "Environment variable was not modified in place for test %d expected %d, got %ld\n",
                        num, strlen(fileData)+1, filestat.st_size);
                return -2;
            }
        }
-       //unlink(filepath); // delete file
-       //rmdir(homepath);
+       unlink(filepath); // delete file
+       rmdir(homepath);
    }
 
    return status;

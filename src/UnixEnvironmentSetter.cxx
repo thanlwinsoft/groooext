@@ -114,7 +114,7 @@ namespace org { namespace sil { namespace graphite {
                     {
                         endOfLine++;
                     }
-                    if (strlen(value) <= (endOfLine - envPos))
+                    if (static_cast<int>(strlen(value)) <= (endOfLine - envPos))
                     {
                         varEndPos = pos + (endOfLine - buffer);
 #ifdef GROOO_DEBUG

@@ -21,6 +21,9 @@
 #include <map>
 #include <cassert>
 #include <graphite/FileFont.h>
+#include "com/sun/star/uno/Exception.hpp"
+
+namespace css = ::com::sun::star;
 
 #ifdef SAL_UNX
 
@@ -35,8 +38,103 @@ org::sil::graphite::GraphiteFontInfo * org::sil::graphite::GraphiteFontInfo::sIn
 
 namespace org { namespace sil { namespace graphite {
 
+const ::rtl::OUString GraphiteFontInfo::FEAT_PREFIX = ::rtl::OUString::createFromAscii(":");
+const ::rtl::OUString GraphiteFontInfo::FEAT_SEPARATOR = ::rtl::OUString::createFromAscii("&");
+const ::rtl::OUString GraphiteFontInfo::FEAT_ID_VALUE_SEPARATOR = ::rtl::OUString::createFromAscii("=");
+
+union FeatUnion
+{
+    sal_uInt32 uNum;
+    sal_Char label[5];
+};
+
+static bool isValidChar(char c)
+{
+    if (c == 0 || (c >= 0x20 && c < 0x7F))
+        return true;
+    return false;
+}
+
+::rtl::OUString GraphiteFontInfo::featId2OUString(sal_uInt32 id)
+{
+    FeatUnion featId;
+    featId.uNum = id;
+#ifdef LITTLE_ENDIAN
+    featId.label[0] = (id >> 24) & 0xFF;
+    featId.label[1] = (id >> 16) & 0xFF;
+    featId.label[2] = (id >> 8) & 0xFF;
+    featId.label[3] = (id) & 0xFF;
+#endif
+    if (isValidChar(featId.label[0]) && isValidChar(featId.label[1]) &&
+        isValidChar(featId.label[2]) && isValidChar(featId.label[3]))
+    {
+        featId.label[4] = '\0';
+        return ::rtl::OUString::createFromAscii(featId.label);
+    }
+    else  // treat it as an unsigned integer
+    {
+        char aInt[12]; // should be sufficient for any 32 bit integer even with sign
+        snprintf(aInt, 12, "%lu", id);
+        return ::rtl::OUString::createFromAscii(aInt);
+    }
+}
+
+::rtl::OUString GraphiteFontInfo::featSetting2OUString(sal_Int32 setting)
+{
+    char aInt[12]; // should be sufficient for any 32 bit integer even with sign
+    snprintf(aInt, 12, "%ld", setting);
+    return ::rtl::OUString::createFromAscii(aInt);
+}
+
+sal_uInt32 GraphiteFontInfo::ouString2FeatId(const ::rtl::OUString & idString) throw (css::lang::IllegalArgumentException)
+{
+    FeatUnion featId;
+    if (idString.getLength() > 4) throw css::lang::IllegalArgumentException(idString, NULL, 0);
+    if (idString[0] >= '0' && idString[0] <= '9')
+    {
+        // it the first character is a digit, assume it is an integer number
+        ::rtl::OString aInt(12); // should be sufficient for any 32 bit integer even with sign
+        idString.convertToString(&aInt, RTL_TEXTENCODING_UTF8, aInt.getLength());
+        sal_uInt32 uintId = atoi(aInt.getStr());
+        return uintId;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        if (idString.getLength() <= i)
+        {
+#ifdef LITTLE_ENDIAN
+            featId.label[3-i] = '\0';
+#else
+#ifdef BIG_ENDIAN
+            featId.label[i] = '\0';
+#else
+#error endianness not defined
+#endif
+#endif
+            continue;
+        }
+        if (idString[i] > 127) throw css::lang::IllegalArgumentException(idString, NULL, 0);
+#ifdef LITTLE_ENDIAN
+        featId.label[3-i] = static_cast<char>(idString[i]);
+#else
+        featId.label[i] = static_cast<char>(idString[i]);
+#endif
+    }
+    return featId.uNum;
+}
+
+sal_Int32 GraphiteFontInfo::ouString2FeatSetting(const ::rtl::OUString & settingString) throw (css::lang::IllegalArgumentException)
+{
+    sal_Int32 setting = 0;
+    ::rtl::OString aInt(12); // should be sufficient for any 32 bit integer even with sign
+    settingString.convertToString(&aInt, RTL_TEXTENCODING_UTF8, aInt.getLength());
+    setting = atoi(aInt.getStr());
+    return setting;
+}
+
 static const size_t MAX_FONT_NAME_SIZE = 128;
 
+#ifdef SAL_UNX
 class FTGraphiteFontInfo : public GraphiteFontInfo
 {
     public:
@@ -48,6 +146,7 @@ class FTGraphiteFontInfo : public GraphiteFontInfo
         std::map<std::string, std::string> mFontMap;
         FT_Library mLibrary;
 };
+#endif
 
 }}}
 
@@ -151,7 +250,6 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
             char * fontFileName = NULL;
             if (FcPatternGetString(fcMatchPattern, "file", 0, reinterpret_cast<FcChar8**>(&fontFileName)) == 0)
             {
-                FT_Open_Args args;
                 FT_Face face;
                 FT_Error status = FT_New_Face(mLibrary, fontFileName, 0, &face);
                 if (!status)

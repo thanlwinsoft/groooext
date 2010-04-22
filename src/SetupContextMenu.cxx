@@ -54,6 +54,8 @@
 
 #include "graphiteooo.hxx"
 #include "SetupContextMenu.hxx"
+#include "FeatureDialogEventHandler.hxx"
+#include "GraphiteFontInfo.hxx"
 
 namespace css = ::com::sun::star;
 
@@ -75,7 +77,9 @@ private:
     SetupContextMenu(const org::sil::graphite::SetupContextMenu &); // not defined
     SetupContextMenu& operator=(const org::sil::graphite::SetupContextMenu &); // not defined
 
-    // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::SetupContextMenu() {}
+    // destructor is private and will be called indirectly by the release call
+    virtual ~SetupContextMenu() {}
+
     css::uno::Reference< css::frame::XFrame > m_xFrame;
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     css::uno::Reference< css::frame::XController > m_xController;
@@ -183,29 +187,6 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
 
         css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
         css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
-        /*
-        css::uno::Reference<css::uno::XInterface> xSelectionInterface;
-        css::uno::Reference<css::container::XIndexAccess> xSelectionContainer;
-        if (selection.has<css::uno::Reference<css::uno::XInterface> >())
-        {
-            xSelectionInterface.set(selection.get<css::uno::Reference<css::uno::XInterface> >());
-            fprintf(stderr, "Have selection interface\n");
-        }
-        if (selection.has<css::uno::Reference<css::container::XIndexAccess> >())
-        {
-            xSelectionContainer.set(selection.get<css::uno::Reference<css::container::XIndexAccess> >());
-            if (xSelectionContainer.get()->getCount() > 0 &&
-                xSelectionContainer.get()->getByIndex(0).has<css::uno::Reference<css::uno::XInterface> >())
-            {
-                xSelectionInterface.set(xSelectionContainer.get()->getByIndex(0).get<css::uno::Reference<css::uno::XInterface> >());
-                fprintf(stderr, "Have selection interface 0\n");
-            }
-        }
-        else
-        {
-            fprintf(stderr, "Selection has no index acces\n");
-        }
-        */
         if (m_xController.is())
         {
             fprintf(stderr, "Have controller\n");
@@ -213,21 +194,31 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
             if (xTextCursorSupplier.is())
                 xTextCursor.set(xTextCursorSupplier->getViewCursor());
         }
+        bool haveGraphiteFont = false;
         if (xTextCursor.is())
         {
             fprintf(stderr, "Have text cursor\n");
             css::uno::Reference< css::beans::XPropertySet> xTextProperties(xTextCursor, css::uno::UNO_QUERY);
-            css::uno::Any aFontName = xTextProperties.get()->
-                getPropertyValue(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("CharFontName")));
-            css::uno::Any aFontNameAsian = xTextProperties.get()->
-                getPropertyValue(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("CharFontNameAsian")));
-            css::uno::Any aFontNameComplex = xTextProperties.get()->
-                getPropertyValue(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("CharFontNameComplex")));
+            for (int i=0; i < FeatureDialogEventHandler::NUM_SCRIPTS; i++)
+            {
+                css::uno::Any aFontName = xTextProperties.get()->getPropertyValue(FeatureDialogEventHandler::FONT_PROPERTY_NAME[i]);
+                ::rtl::OUString fontName = aFontName.get< ::rtl::OUString >();
+                sal_Int32 featStart = fontName.indexOf(GraphiteFontInfo::FEAT_PREFIX);
+                if (featStart > -1)
+                {
+                    fontName = fontName.copy(0, featStart);
+                }
+                if (GraphiteFontInfo::getFontInfo().isGraphiteFont(fontName))
+                    haveGraphiteFont = true;
+            }
         }
         else
         {
             fprintf(stderr, "Have no cursor\n");
         }
+        // no need for a menu if there are no graphite fonts in use
+        if (!haveGraphiteFont)
+            return css::ui::ContextMenuInterceptorAction_IGNORED;
 
         css::uno::Reference<css::container::XIndexContainer> xContextMenu(aEvent.ActionTriggerContainer);
         css::uno::Reference< css::lang::XMultiServiceFactory > xFactory(xContextMenu, css::uno::UNO_QUERY);
@@ -241,7 +232,7 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
             static const ::rtl::OUString SUBCONTAINER(RTL_CONSTASCII_USTRINGPARAM("SubContainer"));
             css::uno::Reference<css::beans::XPropertySet> xGrMenuRoot(xFactory.get()->createInstance (actionTrigger), css::uno::UNO_QUERY);
             css::uno::Reference<css::beans::XPropertySet> xGrSubMenu(xFactory.get()->createInstance (actionTriggerContainer), css::uno::UNO_QUERY);
-            css::uno::Any grFeaturesText(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Graphite Features")));
+            css::uno::Any grFeaturesText(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Graphite Features...")));
             xGrMenuRoot.get()->setPropertyValue(TEXT, grFeaturesText);
             css::uno::Any grFeaturesCommand(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.graphiteoptions:contextmenu")));
             xGrMenuRoot.get()->setPropertyValue(COMMAND_URL, grFeaturesCommand);

@@ -92,7 +92,9 @@ private:
     static const ::rtl::OUString GRAPHITE_ENABLED_LABEL;
     static const ::rtl::OUString GRAPHITE_DISABLED_LABEL;
     static const ::rtl::OUString GRAPHITE_FONT_LIST;
-    // destructor is private and will be called indirectly by the release call    virtual ~org::sil::graphite::DialogEventHandler() {}
+    // destructor is private and will be called indirectly by the release call
+    virtual ~DialogEventHandler() {}
+
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     GraphiteConfiguration m_config;
 };
