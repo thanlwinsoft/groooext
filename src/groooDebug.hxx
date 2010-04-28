@@ -22,14 +22,18 @@
  * for a copy of the LGPLv3 License.
  *
  ************************************************************************/
-#ifndef graphiteooo_hxx
-#define graphiteooo_hxx
+
+#ifndef grooodebug_hxx
+#define grooodebug_hxx
 
 #include "com/sun/star/beans/XPropertySet.hpp"
 
 namespace org { namespace sil { namespace graphite {
-    extern const char * SAL_DISABLE_GRAPHITE;
+
+    void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
+
+	void logMsg(const char * msg, ...);
+
 }}}
 
 #endif
-

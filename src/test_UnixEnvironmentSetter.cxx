@@ -1,3 +1,6 @@
+
+#ifdef SAL_UNX
+
 #include <cerrno>
 #include <cassert>
 #include <cstdio>
@@ -200,3 +203,5 @@ int main(int argc, char ** argv)
     status |= runTest(++testNum, fileData, "1", true);
     return status;
 }
+
+#endif

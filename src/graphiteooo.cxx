@@ -23,58 +23,27 @@
  *
  ************************************************************************/
 
-#include <cstdio>
-
-#include "sal/typesizes.h"
 #include "sal/config.h"
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
 #include "cppuhelper/implementationentry.hxx"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
+#include "groooDebug.hxx"
 #include "graphiteooo.hxx"
 #include "GraphiteAddOn.hxx"
+
 #include "DialogEventHandler.hxx"
 #include "FeatureDialogEventHandler.hxx"
 #include "SetupContextMenu.hxx"
 
-const char * org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE";
+const char * ::org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE";
 
 namespace css = ::com::sun::star;
-
-void org::sil::graphite::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > propSet)
-{
-    css::uno::Reference< css::beans::XPropertySetInfo>xPropSetInfo(propSet.get()->getPropertySetInfo());
-    css::uno::Sequence< css::beans::Property> properties = xPropSetInfo.get()->getProperties();
-    for (int i = 0; i < properties.getLength(); i++)
-    {
-        ::rtl::OString propName(128);
-        ::rtl::OString propValue(128);
-        properties[i].Name.convertToString(&propName, RTL_TEXTENCODING_UTF8, propName.getLength());
-        try
-        {
-            ::css::uno::Any aValue = propSet.get()->getPropertyValue(properties[i].Name);
-            if (aValue.hasValue() && aValue.has< ::rtl::OUString>())
-            {
-                ::rtl::OUString value = aValue.get< ::rtl::OUString>();
-                value.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-            }
-            else
-            {
-                propValue = "?";
-            }
-        }
-        catch (::com::sun::star::lang::WrappedTargetException we)
-        {
-            css::uno::Exception e = we.TargetException.get<css::uno::Exception>();
-            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-        }
-        catch (::com::sun::star::uno::Exception e)
-        {
-            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-        }
-        fprintf(stderr, "Property name:%s value:%s\n", propName.getStr(), propValue.getStr());
-    }
-}
+namespace osg = ::org::sil::graphite;
 
 // Define the supported services
 static ::cppu::ImplementationEntry const entries[] = {
@@ -93,26 +62,35 @@ static ::cppu::ImplementationEntry const entries[] = {
     { 0, 0, 0, 0, 0, 0 }
 };
 
-
-extern "C" void SAL_CALL component_getImplementationEnvironment(
-    const char ** envTypeName, uno_Environment **)
+extern "C"
 {
-    *envTypeName = CPPU_CURRENT_LANGUAGE_BINDING_NAME;
-}
 
-extern "C" void * SAL_CALL component_getFactory(
-    const char * implName, void * serviceManager, void * registryKey)
-{
-#ifdef GROOO_DEBUG
-    printf("component_getFactory %s\n", implName);
+	SAL_DLLPUBLIC_EXPORT 
+	void SAL_CALL component_getImplementationEnvironment(
+		const char ** envTypeName, uno_Environment **)
+	{
+#ifdef _MSC_VER
+		OutputDebugStringA("getImplementationEnvironment\n");
 #endif
-    return ::cppu::component_getFactoryHelper(
-        implName, serviceManager, registryKey, entries);
-}
+		*envTypeName = CPPU_CURRENT_LANGUAGE_BINDING_NAME;
+	}
 
-extern "C" sal_Bool SAL_CALL component_writeInfo(
-    void * serviceManager, void * registryKey)
-{
-    return ::cppu::component_writeInfoHelper(serviceManager, registryKey, entries);
-}
+	SAL_DLLPUBLIC_EXPORT
+	void * SAL_CALL component_getFactory(
+		const char * implName, void * serviceManager, void * registryKey)
+	{
+#ifdef GROOO_DEBUG
+		osg::logMsg("component_getFactory %s\n", implName);
+#endif
+		return ::cppu::component_getFactoryHelper(
+			implName, serviceManager, registryKey, entries);
+	}
 
+	SAL_DLLPUBLIC_EXPORT
+	sal_Bool SAL_CALL component_writeInfo(
+		void * serviceManager, void * registryKey)
+	{
+		return ::cppu::component_writeInfoHelper(serviceManager, registryKey, entries);
+	}
+
+}

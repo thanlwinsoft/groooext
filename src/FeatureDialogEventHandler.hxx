@@ -33,7 +33,7 @@
 #define featuredialogeventhandler_hxx
 
 #include <map>
-#include <sal/typesizes.h>
+
 #include <sal/config.h>
 #include <rtl/string.h>
 #include <rtl/ustring.hxx>
@@ -130,7 +130,7 @@ private:
 
     static const ::rtl::OUString OK_EVENT;
     static const ::rtl::OUString CANCEL_EVENT;
-    static const ::rtl::OUString FOCUS_EVENT;
+    static const ::rtl::OUString DIALOG_FOCUS_EVENT;
     static const ::rtl::OUString EXTERNAL_EVENT;
     static const ::rtl::OUString TREE_CONTROL;
     static const ::rtl::OUString UPDATE_STYLE_CHECKBOX;

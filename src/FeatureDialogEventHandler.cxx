@@ -32,7 +32,6 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "sal/typesizes.h"
 #include "sal/config.h"
 #include "rtl/ustrbuf.hxx"
 #include "com/sun/star/uno/XInterface.hpp"
@@ -59,6 +58,7 @@
 
 #include "FeatureDialogEventHandler.hxx"
 #include "GraphiteFontInfo.hxx"
+#include "groooDebug.hxx"
 #include "graphiteooo.hxx"
 
 namespace css = ::com::sun::star;
@@ -67,7 +67,7 @@ namespace osg = ::org::sil::graphite;
 const ::rtl::OUString osg::FeatureDialogEventHandler::OK_EVENT(RTL_CONSTASCII_USTRINGPARAM("grfeaturedialog_ok"));
 const ::rtl::OUString osg::FeatureDialogEventHandler::CANCEL_EVENT(RTL_CONSTASCII_USTRINGPARAM("grfeaturedialog_cancel"));
 const ::rtl::OUString osg::FeatureDialogEventHandler::EXTERNAL_EVENT(RTL_CONSTASCII_USTRINGPARAM("external_event"));
-const ::rtl::OUString osg::FeatureDialogEventHandler::FOCUS_EVENT(RTL_CONSTASCII_USTRINGPARAM("grfeaturedialog_focus"));
+const ::rtl::OUString osg::FeatureDialogEventHandler::DIALOG_FOCUS_EVENT(RTL_CONSTASCII_USTRINGPARAM("grfeaturedialog_focus"));
 const ::rtl::OUString osg::FeatureDialogEventHandler::TREE_CONTROL(RTL_CONSTASCII_USTRINGPARAM("GrFeatureTreeControl"));
 const ::rtl::OUString osg::FeatureDialogEventHandler::UPDATE_STYLE_CHECKBOX(RTL_CONSTASCII_USTRINGPARAM("UpdateStyleCheckBox"));
 const ::rtl::OUString osg::FeatureDialogEventHandler::FONT_PROPERTY_NAME[NUM_SCRIPTS] =  {  
@@ -83,7 +83,9 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
                                                                             const ::rtl::OUString & location) :
     m_xContext(context), m_xFactory(context.get()->getServiceManager()), m_xModel(model), m_extensionBase(location)
 {
-    fprintf(stderr, "FeatureDialogEventHandler constructor\n");
+#ifdef GROOO_DEBUG
+    logMsg("FeatureDialogEventHandler constructor\n");
+#endif
     m_fonts[0] = m_fonts[1] = m_fonts[2] = NULL;
 }
 
@@ -91,9 +93,9 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
 ::sal_Bool SAL_CALL org::sil::graphite::FeatureDialogEventHandler::callHandlerMethod(const css::uno::Reference< css::awt::XDialog > & xDialog, const ::com::sun::star::uno::Any & EventObject, const ::rtl::OUString & MethodName) throw (css::uno::RuntimeException, css::lang::WrappedTargetException)
 {
 #ifdef GROOO_DEBUG
-    rtl::OString aMethodName(128);
+    rtl::OString aMethodName;
     MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, 128);
-    fprintf(stderr, "FeatureDialogEventHandler callHandlerMethod(%s)\n", aMethodName.getStr());
+    logMsg("FeatureDialogEventHandler callHandlerMethod(%s)\n", aMethodName.getStr());
 #endif
     // TODO: Exchange the default return implementation for "callHandlerMethod" !!!
     // Exchange the default return implementation.
@@ -109,9 +111,9 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::FeatureDialog
     methodNames[0] = OK_EVENT;
     methodNames[1] = CANCEL_EVENT;
     methodNames[2] = EXTERNAL_EVENT;
-    methodNames[3] = FOCUS_EVENT;
+    methodNames[3] = DIALOG_FOCUS_EVENT;
 #ifdef GROOO_DEBUG
-    fprintf(stderr, "FeatureDialogEventHandler::getSupportedMethodNames\n");
+    logMsg("FeatureDialogEventHandler::getSupportedMethodNames\n");
 #endif
     // NOTE: Default initialized polymorphic structs can cause problems because of
     // missing default initialization of primitive types of some C++ compilers or
@@ -124,7 +126,7 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::FeatureDialog
 void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::disposing(const css::lang::EventObject & Source) throw (css::uno::RuntimeException)
 {
 #ifdef GROOO_DEBUG
-    fprintf(stderr, "FeatureDialogEventHandler::disposing\n");
+    logMsg("FeatureDialogEventHandler::disposing\n");
 #endif
     for (int i = 0; i < 3; i++)
         if (m_fonts[i])
@@ -134,6 +136,11 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::disposing(const css
         }
 }
 
+/**
+* Parses the feature description into a hash table of featureId:featureSetting
+* @param fontScript
+* @param featureDesc
+*/
 void org::sil::graphite::FeatureDialogEventHandler::initFeatureMap(FontScript fontScript, const ::rtl::OUString & featureDesc)
 {
     sal_Int32 sep = featureDesc.indexOf(GraphiteFontInfo::FEAT_SEPARATOR);
@@ -151,9 +158,11 @@ void org::sil::graphite::FeatureDialogEventHandler::initFeatureMap(FontScript fo
         }
         catch (css::lang::IllegalArgumentException e)
         {
-            ::rtl::OString msg(128);
-            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
-            fprintf(stderr, "initFeatureMap illegal feature %s\n", msg.getStr());
+            ::rtl::OString msg;
+            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+#ifdef GROOO_DEBUG
+            logMsg("initFeatureMap illegal feature %s\n", msg.getStr());
+#endif
         }
         pos = sep + 1;
         if (pos == featureDesc.getLength()) break;
@@ -172,18 +181,28 @@ void org::sil::graphite::FeatureDialogEventHandler::initFeatureMap(FontScript fo
             sal_Int32 featSetting = GraphiteFontInfo::ouString2FeatSetting(featSettingString);
             m_featureSettings[fontScript][featId] = featSetting;
 #ifdef GROOO_DEBUG
-            fprintf(stderr, "Feature %lx = %ld\n", featId, featSetting);
+            logMsg("Feature %lx = %ld\n", featId, featSetting);
 #endif
         }
         catch (css::lang::IllegalArgumentException e)
         {
-            ::rtl::OString msg(128);
+            ::rtl::OString msg;
             e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
-            fprintf(stderr, "initFeatureMap illegal feature %s\n", msg.getStr());
+#ifdef GROOO_DEBUG
+            logMsg("initFeatureMap illegal feature %s\n", msg.getStr());
+#endif
         }
     }
 }
 
+/**
+* Adds the font features for a given font to the tree
+* @param xMutableDataModel - tree model
+* @param rootNode of tree
+* @param fontScript western/ctl/asian
+* @param fontName full name of font as stored in OTF
+* @param fontDesc description of type of font
+*/
 void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
     css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel,
     css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode, 
@@ -222,7 +241,7 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
             gr::lgid lang = en_US;
             gr::FeatureIterator iFeat = iFeats.first;
 #ifdef GROOO_DEBUG
-            fprintf(stderr, "Loaded font with %d\n", iFeats.second - iFeats.first);
+            logMsg("Loaded font with %d features\n", iFeats.second - iFeats.first);
 #endif
             while (iFeat != iFeats.second)
             {
@@ -233,8 +252,11 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
                 {
                     hasLabel = grFont->getFeatureLabel(iFeat, *(iFeatLangs.first), featLabel);
                     lang = *(iFeatLangs.first);
+#ifdef GROOO_DEBUG
+					logMsg("Feature label for en_US not found using lang %x\n", lang);
+#endif
                 }
-                ::rtl::OUString featName(featLabel);
+                ::rtl::OUString featName(reinterpret_cast<sal_Unicode*>(featLabel));
                 if (hasLabel)
                 {
                     css::uno::Reference<css::awt::tree::XMutableTreeNode> featNode = xMutableDataModel.get()->createNode(css::uno::Any(featName), sal_False);
@@ -249,11 +271,14 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
                     sal_Int32 value = *defaultValue;
                     if (m_featureSettings[fontScript].find(*iFeat) != m_featureSettings[fontScript].end())
                         value = m_featureSettings[fontScript][*iFeat];
-                    fprintf(stderr, "Feature %d has %d settings\n", iFeat - iFeats.first, iSettings.second - iSettings.first);
+#ifdef GROOO_DEBUG
+                    logMsg("Feature %d has %d settings\n", iFeat - iFeats.first, iSettings.second - iSettings.first);
+#endif
                     while (iSetting != iSettings.second)
                     {
                         hasLabel = grFont->getFeatureSettingLabel(iSetting, lang, featLabel);
-                        ::rtl::OUString settingName(featLabel);
+						assert(sizeof(gr::utf16) == sizeof(sal_Unicode));
+                        ::rtl::OUString settingName(reinterpret_cast<sal_Unicode*>(featLabel));
                         if (*iSetting == *defaultValue)
                             settingName += defaultLabel;
                         css::uno::Reference<css::awt::tree::XMutableTreeNode> settingNode = xMutableDataModel.get()->createNode(css::uno::Any(settingName), sal_False);
@@ -278,6 +303,7 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
                 }
                 ++iFeat;
             }
+			grInfo.unloadFont(grFont);
         }
     }
     else
@@ -289,7 +315,9 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
 void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel)
 {
     assert(xMutableDataModel.is());
-    fprintf(stderr, "FeatureDialogEventHandler::setupTreeModel\n");
+#ifdef GROOO_DEBUG
+    logMsg("FeatureDialogEventHandler::setupTreeModel\n");
+#endif
     m_xController.set(m_xModel->getCurrentController());
     if (!m_xController.is()) return;
     css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
@@ -317,7 +345,7 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
         else
         {
 #ifdef GROOO_DEBUG
-            fprintf(stderr, "CharacterStyles name container not found\n");
+            logMsg("CharacterStyles name container not found\n");
 #endif
         }
         css::uno::Any aParagraphStyles = xStyleNameAccess.get()->getByName(::rtl::OUString::createFromAscii("ParagraphStyles"));
@@ -329,7 +357,9 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
 
     if (xTextCursor.is())
     {
-        fprintf(stderr, "Have text cursor\n");
+#ifdef GROOO_DEBUG
+        logMsg("Have text cursor\n");
+#endif
         css::uno::Reference< css::beans::XPropertySet> xTextProperties(xTextCursor, css::uno::UNO_QUERY);
 
 
@@ -345,7 +375,9 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
         addFontFeatures(xMutableDataModel, rootNode, ASIAN_SCRIPT, aFontNameAsian.get< ::rtl::OUString>(), asianFontDesc);
 
         printPropertyNames(xTextProperties);
-        fprintf(stderr, "Check style fonts\n");
+#ifdef GROOO_DEBUG
+        logMsg("Check style fonts\n");
+#endif
         static const ::rtl::OUString charStyleName = ::rtl::OUString::createFromAscii("CharStyleName");
         static const ::rtl::OUString paraStyleName = ::rtl::OUString::createFromAscii("ParaStyleName");
         if (xCharStylesContainer.is() && xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(charStyleName) &&
@@ -388,9 +420,9 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
             else
             {
 #ifdef GROOO_DEBUG
-                ::rtl::OString asciiStyleName(128);
+                ::rtl::OString asciiStyleName(128u);
                 styleName.convertToString(&asciiStyleName, RTL_TEXTENCODING_UTF8, asciiStyleName.getLength());
-                fprintf(stderr, "CharStyleName not found %s\n", asciiStyleName.getStr());
+                logMsg("CharStyleName not found %s\n", asciiStyleName.getStr());
 #endif
                 xCheckBoxWindow.get()->setVisible(sal_False);
             }
@@ -438,22 +470,22 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowOpened(const 
     catch (css::beans::UnknownPropertyException e)
     {
 #ifdef GROOO_DEBUG
-        rtl::OString msg(128);
+        rtl::OString msg;
         e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
-        fprintf(stderr, "UnknownPropertyException %s\n", msg.getStr());
+        logMsg("UnknownPropertyException %s\n", msg.getStr());
 #endif
     }
     catch (css::uno::Exception e)
     {
 #ifdef GROOO_DEBUG
-        rtl::OString msg(128);
+        rtl::OString msg;
         e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
         
-        fprintf(stderr, "Exception %s\n", msg.getStr());
+        logMsg("Exception %s\n", msg.getStr());
 #endif
     }
 #ifdef GROOO_DEBUG
-    fprintf(stderr, "FeatureDialogEventHandler::windowOpened\n");
+    logMsg("FeatureDialogEventHandler::windowOpened\n");
 #endif
 }
 
@@ -461,7 +493,7 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowClosing(const
 {
     // this is only called when the user closes the dialog from the window title bar
 #ifdef GROOO_DEBUG
-    fprintf(stderr, "FeatureDialogEventHandler::windowClosing\n");
+    logMsg("FeatureDialogEventHandler::windowClosing\n");
 #endif
 }
 
@@ -469,7 +501,7 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowClosed(const 
 {
     storeFeatures();
 #ifdef GROOO_DEBUG
-    fprintf(stderr, "FeatureDialogEventHandler::windowClosed\n");
+    logMsg("FeatureDialogEventHandler::windowClosed\n");
 #endif
 }
 
@@ -495,13 +527,17 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowDeactivated(c
 
 void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::nodeEditing( const ::com::sun::star::uno::Reference< ::com::sun::star::awt::tree::XTreeNode >& Node ) throw (::com::sun::star::util::VetoException, ::com::sun::star::uno::RuntimeException)
 {
-    fprintf(stderr, "FeatureDialogEventHandler::nodeEditing\n");
+#ifdef GROOO_DEBUG
+    logMsg("FeatureDialogEventHandler::nodeEditing\n");
+#endif
 }
 
 void SAL_CALL 
 org::sil::graphite::FeatureDialogEventHandler::nodeEdited( const ::com::sun::star::uno::Reference< ::com::sun::star::awt::tree::XTreeNode >& Node, const ::rtl::OUString& NewText ) throw (::com::sun::star::uno::RuntimeException)
 {
-    fprintf(stderr, "FeatureDialogEventHandler::nodeEdited\n");
+#ifdef GROOO_DEBUG
+    logMsg("FeatureDialogEventHandler::nodeEdited\n");
+#endif
 }
 
 void SAL_CALL 
@@ -526,7 +562,9 @@ org::sil::graphite::FeatureDialogEventHandler::selectionChanged( const ::com::su
                     // It is at the correct level for a setting node
                     int fontIndex = font.get()->getParent().get()->getIndex(font);
                     // This is a feature setting node
-                    fprintf(stderr, "FeatureDialogEventHandler::selectionChanged font %d node %d\n", fontIndex, settingNode.is());
+#ifdef GROOO_DEBUG
+                    logMsg("FeatureDialogEventHandler::selectionChanged font %d node %d\n", fontIndex, settingNode.is());
+#endif
                     settingNode.get()->setNodeGraphicURL(m_extensionBase + ENABLED_ICON);
                     m_featureSettings[fontIndex][featureNode.get()->getDataValue().get<sal_uInt32>()] = settingNode.get()->getDataValue().get<sal_Int32>();
                     int settingIndex = feature.get()->getIndex(setting);
@@ -561,9 +599,9 @@ void org::sil::graphite::FeatureDialogEventHandler::setFontNames(void)
                 if (m_xStyleTextProperties.is() && m_xUpdateStyle.get()->getState())
                     m_xStyleTextProperties.get()->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
 #ifdef GROOO_DEBUG
-                ::rtl::OString msg(128);
+                ::rtl::OString msg;
                 m_fontNamesWithFeatures[i].convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
-                fprintf(stderr, "set font %d to %s updated style %d\n", i, msg.getStr(),
+                logMsg("set font %d to %s updated style %d\n", i, msg.getStr(),
                         m_xUpdateStyle.get()->getState());
 #endif
             }
@@ -627,7 +665,7 @@ namespace org { namespace sil { namespace graphite { namespace featuredialogeven
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
 {
 #ifdef GROOO_DEBUG
-    printf("FeatureDialogEventHandler _getSupportedServiceNames\n");
+    logMsg("FeatureDialogEventHandler _getSupportedServiceNames\n");
 #endif
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.FeatureDialogEventHandler"));

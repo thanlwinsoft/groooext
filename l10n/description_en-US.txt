@@ -1,0 +1,1 @@
+Enable/disable Graphite Rendering support and apply features in Graphite Fonts.

@@ -33,7 +33,6 @@
 #include <cstdlib>
 #include <cassert>
 
-#include "sal/typesizes.h"
 #include "sal/config.h"
 //#include "cppuhelper/bootstrap.hxx" //?
 #include "cppuhelper/implementationentry.hxx"
@@ -53,11 +52,17 @@
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/util/XChangesBatch.hpp"
 
+#include "groooDebug.hxx"
 #include "graphiteooo.hxx"
 #include "GraphiteConfiguration.hxx"
+
 #ifdef SAL_UNX
 #include "UnixEnvironmentSetter.hxx"
 #endif
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include "DialogEventHandler.hxx"
 #include "GraphiteFontInfo.hxx"
 
@@ -111,7 +116,7 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
     m_xContext(context), m_config(context)
 {
 #ifdef GROOO_DEBUG
-    printf("DialogEventHandler constructor\n");
+    logMsg("DialogEventHandler constructor\n");
 #endif
 }
 
@@ -119,9 +124,9 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
 ::sal_Bool SAL_CALL org::sil::graphite::DialogEventHandler::callHandlerMethod(const css::uno::Reference< css::awt::XWindow > & xWindow, const ::com::sun::star::uno::Any & EventObject, const ::rtl::OUString & MethodName) throw (css::uno::RuntimeException, css::lang::WrappedTargetException)
 {
 #ifdef GROOO_DEBUG
-    rtl::OString aMethodName(128);
+    rtl::OString aMethodName;
     MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, 128);
-    printf("callHandlerMethod(%s)\n", aMethodName.getStr());
+    logMsg("callHandlerMethod(%s)\n", aMethodName.getStr());
 #endif
     if (MethodName.compareTo(EXTERNAL_EVENT) == 0)
     {
@@ -145,7 +150,7 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
         if (!xCheckBox.is())
         {
 #ifdef GROOO_DEBUG
-            printf("Failed to get graphite enabled checkbox");
+            logMsg("Failed to get graphite enabled checkbox");
 #endif
             return sal_False;
         }
@@ -155,21 +160,52 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
         css::uno::Reference< css::beans::XPropertySet > graphitePropertySet(graphiteOptions, css::uno::UNO_QUERY);
 
         sal_Bool environmentGraphiteEnabled = sal_False;
-        const char * pDisableGraphiteStr = getenv(SAL_DISABLE_GRAPHITE);
+#ifdef _MSC_VER
+        char * pDisableGraphiteStr = NULL;
+		size_t envBufSize = 0;
+		if (_dupenv_s(&pDisableGraphiteStr, &envBufSize, SAL_DISABLE_GRAPHITE))
+			pDisableGraphiteStr = NULL;
+#else
+		const char * pDisableGraphiteStr = getenv(SAL_DISABLE_GRAPHITE);
+#endif
         if (pDisableGraphiteStr == NULL || pDisableGraphiteStr[0]=='0')
             environmentGraphiteEnabled = sal_True;
 
+#ifdef _MSC_VER
+		if (pDisableGraphiteStr)
+		{
+			free(pDisableGraphiteStr);
+			pDisableGraphiteStr = NULL;
+		}
+#endif
         if (eventValue.equalsAscii("ok"))
         {
 #ifdef GROOO_DEBUG
-            printf("Graphite enable checkbox %d\n", xCheckBox.get()->getState());
+            logMsg("Graphite enable checkbox %d\n", xCheckBox.get()->getState());
 #endif
 
+#ifdef WIN32
+			HKEY userEnvKey = NULL;
+			LSTATUS status = RegOpenKeyExA(HKEY_CURRENT_USER, "Environment", 0, KEY_SET_VALUE, &userEnvKey);
+#ifdef GROOO_DEBUG
+			if (status != ERROR_SUCCESS)
+			{
+				logMsg("Failed to find HKCU Environment key\n");
+			}
+#endif
+#endif
             if (xCheckBox.get()->getState())
             {
                 graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_True));
 #ifdef SAL_UNX
                 UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "0");
+#endif
+#ifdef WIN32
+				if (status == ERROR_SUCCESS)
+				{
+					status = RegSetValueExA(userEnvKey, SAL_DISABLE_GRAPHITE, 0,
+						REG_EXPAND_SZ, reinterpret_cast<const BYTE*>("0"), 2);
+				}
 #endif
             }
             else
@@ -178,12 +214,22 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
 #ifdef SAL_UNX
                 UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "1");
 #endif
+#ifdef WIN32
+				if (status == ERROR_SUCCESS)
+				{
+					status = RegSetValueExA(userEnvKey, SAL_DISABLE_GRAPHITE, 0,
+						REG_EXPAND_SZ, reinterpret_cast<const BYTE*>("1"), 2);
+				}
+#endif
             }
+#ifdef WIN32
+			if (userEnvKey) RegCloseKey(userEnvKey);
+#endif
             css::uno::Reference< css::util::XChangesBatch > batch(m_config.nameAccess(), css::uno::UNO_QUERY);
             if (batch.is())
                 batch.get()->commitChanges();
 #ifdef GROOO_DEBUG
-            else fprintf(stderr, "%s Failed to get XChangesBatch", __FUNCTION__);
+            else logMsg("%s Failed to get XChangesBatch", __FUNCTION__);
 #endif
             if (environmentGraphiteEnabled != xCheckBox.get()->getState())
             {
@@ -233,7 +279,7 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             return sal_True;
         }
 #ifdef GROOO_DEBUG
-        printf("DialogEventHandler::externalEvent Unexpected\n");
+        logMsg("DialogEventHandler::externalEvent Unexpected\n");
 #endif
     }
     return sal_False;
@@ -312,11 +358,11 @@ org::sil::graphite::DialogEventHandler::setupGraphiteFontList(const css::uno::Re
             if (grFontInfo.isGraphiteFont(fontDescriptors[i].Name))
             {
 #ifdef GROOO_DEBUG
-                rtl::OString aFontName(128);
-                rtl::OString aFontStyleName(128);
+                rtl::OString aFontName;
+                rtl::OString aFontStyleName;
                 fontDescriptors[i].Name.convertToString(&aFontName, RTL_TEXTENCODING_UTF8, 128);
                 fontDescriptors[i].StyleName.convertToString(&aFontStyleName, RTL_TEXTENCODING_UTF8, 128);
-                fprintf(stderr, "%s (%s) has graphite tables\n", aFontName.getStr(), aFontStyleName.getStr() );
+                logMsg("%s (%s) has graphite tables\n", aFontName.getStr(), aFontStyleName.getStr() );
 #endif
                 // ignore duplicate names
                 if (grFontCount > 0 && grFontNames[grFontCount-1].equals(fontDescriptors[i].Name))
@@ -344,7 +390,7 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::DialogEventHa
     methodNames[0] = ENABLE_GRAPHITE_EVENT;
     methodNames[1] = EXTERNAL_EVENT;
 #ifdef GROOO_DEBUG
-    printf("DialogEventHandler::getSupportedMethodNames\n");
+    logMsg("DialogEventHandler::getSupportedMethodNames\n");
 #endif
     return methodNames;
 }
@@ -360,7 +406,7 @@ namespace org { namespace sil { namespace graphite { namespace dialogeventhandle
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
 {
 #ifdef GROOO_DEBUG
-    printf("DialogEventHandler _getSupportedServiceNames\n");
+    logMsg("DialogEventHandler _getSupportedServiceNames\n");
 #endif
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.DialogEventHandler"));

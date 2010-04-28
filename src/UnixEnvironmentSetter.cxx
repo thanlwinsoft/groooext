@@ -13,11 +13,14 @@
    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.
 */
+#ifdef SAL_UNX
+
 #include <cstring>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 
+#include "groooDebug.hxx"
 #include "UnixEnvironmentSetter.hxx"
 namespace org { namespace sil { namespace graphite {
 
@@ -48,7 +51,9 @@ namespace org { namespace sil { namespace graphite {
         char buffer[BUFFER_SIZE];
         char search[BUFFER_SIZE];
         snprintf(search, BUFFER_SIZE, "export %s=", var);
+#ifdef GROOO_DEBUG
         printf("Searching for %s\n", search);
+#endif
         FILE * shellFile = fopen(path, "r+");
         if (shellFile == NULL)
         {
@@ -180,3 +185,4 @@ namespace org { namespace sil { namespace graphite {
     }
 
 }}}
+#endif

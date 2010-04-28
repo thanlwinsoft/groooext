@@ -30,7 +30,9 @@
  ************************************************************************/
 #include <cstdio>
 
+#ifdef SAL_UNX
 #include "sal/typesizes.h"
+#endif
 #include "sal/config.h"
 #include "rtl/string.hxx"
 #include "rtl/ustring.hxx"
@@ -52,6 +54,7 @@
 #include "com/sun/star/ui/XContextMenuInterceptor.hpp"
 #include "com/sun/star/view/XSelectionSupplier.hpp"
 
+#include "groooDebug.hxx"
 #include "graphiteooo.hxx"
 #include "SetupContextMenu.hxx"
 #include "FeatureDialogEventHandler.hxx"
@@ -88,7 +91,9 @@ private:
 org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css::uno::XComponentContext > const & context) :
     m_xContext(context)
 {
-    printf("SetupContextMenu constructor\n");
+#ifdef GROOO_DEBUG
+    logMsg("SetupContextMenu constructor\n");
+#endif
 }
 
 // ::com::sun::star::task::XJob:
@@ -97,7 +102,9 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
     css::uno::Any environment;
     css::uno::Any config;
     css::uno::Any jobConfig;
-    fprintf(stderr, "SetupContextMenu execute %ld args\n", arguments.getLength());
+#ifdef GROOO_DEBUG
+    logMsg("SetupContextMenu execute %ld args\n", arguments.getLength());
+#endif
     for (int i=0; i < arguments.getLength(); i++)
     {
         ::rtl::OUString name = arguments[i].Name;
@@ -111,7 +118,9 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
     css::uno::Any envName;
     if (environment.has< css::uno::Sequence< css::beans::NamedValue > >())
     {
-        fprintf(stderr, "Job has environment\n");
+#ifdef GROOO_DEBUG
+        logMsg("Job has environment\n");
+#endif
         css::uno::Sequence< css::beans::NamedValue > envSequence = environment.get<css::uno::Sequence< css::beans::NamedValue > >() ;
         for (int i=0; i < envSequence.getLength(); i++)
         {
@@ -125,15 +134,15 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
 #ifdef GROOO_DEBUG
     if (envType.hasValue())
     {
-        ::rtl::OString asciiEnvType(128);
+        ::rtl::OString asciiEnvType;
         ::rtl::OUString environmentType = envType.get< ::rtl::OUString >();
         environmentType.convertToString(&asciiEnvType, RTL_TEXTENCODING_UTF8, 128);
-        fprintf(stderr, "Job env type %s\n", asciiEnvType.getStr());
+        logMsg("Job env type %s\n", asciiEnvType.getStr());
     }
     if (envFrame.hasValue())
-        fprintf(stderr, "Job Environment has frame\n");
+        logMsg("Job Environment has frame\n");
     if (envModel.hasValue())
-        fprintf(stderr, "Job Environment has model\n");
+        logMsg("Job Environment has model\n");
 #endif
     css::uno::Reference< css::frame::XModel > xModel;
     if (envModel.hasValue())
@@ -146,7 +155,7 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
             if (interception.is())
             {
 #ifdef GROOO_DEBUG
-                fprintf(stderr, "have menu interception from Controller\n");
+                logMsg("have menu interception from Controller\n");
 #endif
                 interception.get()->registerContextMenuInterceptor(this);
             }
@@ -172,7 +181,7 @@ css::ui::ContextMenuInterceptorAction SAL_CALL
 org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun::star::ui::ContextMenuExecuteEvent& aEvent ) throw (css::uno::RuntimeException)
 {
 #ifdef GROOO_DEBUG
-     fprintf(stderr, "notifyContextMenuExecute\n");
+     logMsg("notifyContextMenuExecute\n");
 #endif
     // Is there a relevant useful selection?
     css::uno::Reference<css::view::XSelectionSupplier> xSelection(aEvent.Selection);
@@ -180,16 +189,18 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
     {
         css::uno::Any selection = xSelection.get()->getSelection();
 #ifdef GROOO_DEBUG
-        ::rtl::OString aTypeName(128);
+        ::rtl::OString aTypeName;
         selection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, 128);
-        fprintf(stderr, "Selection type: %s\n", aTypeName.getStr());
+        logMsg("Selection type: %s\n", aTypeName.getStr());
 #endif
 
         css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
         css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
         if (m_xController.is())
         {
-            fprintf(stderr, "Have controller\n");
+#ifdef GROOO_DEBUG
+            logMsg("Have controller\n");
+#endif
             xTextCursorSupplier.set(m_xController, css::uno::UNO_QUERY);
             if (xTextCursorSupplier.is())
                 xTextCursor.set(xTextCursorSupplier->getViewCursor());
@@ -197,7 +208,9 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
         bool haveGraphiteFont = false;
         if (xTextCursor.is())
         {
-            fprintf(stderr, "Have text cursor\n");
+#ifdef GROOO_DEBUG
+            logMsg("Have text cursor\n");
+#endif
             css::uno::Reference< css::beans::XPropertySet> xTextProperties(xTextCursor, css::uno::UNO_QUERY);
             for (int i=0; i < FeatureDialogEventHandler::NUM_SCRIPTS; i++)
             {
@@ -214,7 +227,9 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
         }
         else
         {
-            fprintf(stderr, "Have no cursor\n");
+#ifdef GROOO_DEBUG
+            logMsg("Have no cursor\n");
+#endif
         }
         // no need for a menu if there are no graphite fonts in use
         if (!haveGraphiteFont)
@@ -226,19 +241,21 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
         {
             static const ::rtl::OUString actionTrigger(RTL_CONSTASCII_USTRINGPARAM("com.sun.star.ui.ActionTrigger"));
             static const ::rtl::OUString actionTriggerContainer(RTL_CONSTASCII_USTRINGPARAM("com.sun.star.ui.ActionTriggerContainer"));
-            //const ::rtl::OUString actionTriggerSeparator(RTL_CONSTASCII_USTRINGPARAM("com.sun.star.ui.ActionTriggerSeparator"));
-            static const ::rtl::OUString TEXT(RTL_CONSTASCII_USTRINGPARAM("Text"));
-            static const ::rtl::OUString COMMAND_URL(RTL_CONSTASCII_USTRINGPARAM("CommandURL"));
-            static const ::rtl::OUString SUBCONTAINER(RTL_CONSTASCII_USTRINGPARAM("SubContainer"));
+            static const ::rtl::OUString actionTriggerSeparator(RTL_CONSTASCII_USTRINGPARAM("com.sun.star.ui.ActionTriggerSeparator"));
+            static const ::rtl::OUString PROP_TEXT(RTL_CONSTASCII_USTRINGPARAM("Text"));
+            static const ::rtl::OUString PROP_COMMAND_URL(RTL_CONSTASCII_USTRINGPARAM("CommandURL"));
+            static const ::rtl::OUString PROP_SUBCONTAINER(RTL_CONSTASCII_USTRINGPARAM("SubContainer"));
+			css::uno::Reference<css::beans::XPropertySet> xGrSeparator(xFactory.get()->createInstance (actionTriggerSeparator), css::uno::UNO_QUERY);
             css::uno::Reference<css::beans::XPropertySet> xGrMenuRoot(xFactory.get()->createInstance (actionTrigger), css::uno::UNO_QUERY);
             css::uno::Reference<css::beans::XPropertySet> xGrSubMenu(xFactory.get()->createInstance (actionTriggerContainer), css::uno::UNO_QUERY);
             css::uno::Any grFeaturesText(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Graphite Features...")));
-            xGrMenuRoot.get()->setPropertyValue(TEXT, grFeaturesText);
+            xGrMenuRoot.get()->setPropertyValue(PROP_TEXT, grFeaturesText);
             css::uno::Any grFeaturesCommand(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.graphiteoptions:contextmenu")));
-            xGrMenuRoot.get()->setPropertyValue(COMMAND_URL, grFeaturesCommand);
+            xGrMenuRoot.get()->setPropertyValue(PROP_COMMAND_URL, grFeaturesCommand);
             css::uno::Any grSubMenu(xGrSubMenu);
-            xGrMenuRoot.get()->setPropertyValue(SUBCONTAINER, grSubMenu);
+            xGrMenuRoot.get()->setPropertyValue(PROP_SUBCONTAINER, grSubMenu);
 
+			xContextMenu.get()->insertByIndex(xContextMenu.get()->getCount(), css::uno::Any(xGrSeparator));
             xContextMenu.get()->insertByIndex(xContextMenu.get()->getCount(), css::uno::Any(xGrMenuRoot));
 
             return css::ui::ContextMenuInterceptorAction_CONTINUE_MODIFIED;
@@ -257,7 +274,9 @@ namespace org { namespace sil { namespace graphite { namespace setupcontextmenu 
 
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
 {
-    printf("SetupContextMenu _getSupportedServiceNames\n");
+#ifdef GROOO_DEBUG
+    logMsg("SetupContextMenu _getSupportedServiceNames\n");
+#endif
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.SetupContextMenu"));
     return s;

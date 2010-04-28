@@ -17,7 +17,7 @@
 #ifndef GRAPHITEFONTINFO_H
 #define GRAPHITEFONTINFO_H
 
-#include "sal/typesizes.h"
+#include "sal/types.h"
 #include "sal/config.h"
 #include "rtl/string.hxx"
 #include "rtl/ustring.hxx"
@@ -37,11 +37,13 @@ class GraphiteFontInfo
         virtual ~GraphiteFontInfo() {};
         virtual sal_Bool isGraphiteFont(const ::rtl::OUString & fontName) = 0;
         virtual gr::Font * loadFont(const ::rtl::OUString & fontName) = 0;
+		virtual void unloadFont(gr::Font * font) = 0;
         static ::rtl::OUString featId2OUString(sal_uInt32);
         static ::rtl::OUString featSetting2OUString(sal_Int32);
         static sal_uInt32 ouString2FeatId(const ::rtl::OUString & idString)  throw (css::lang::IllegalArgumentException);
         static sal_Int32 ouString2FeatSetting(const ::rtl::OUString & settingString) throw (css::lang::IllegalArgumentException);
         static GraphiteFontInfo & getFontInfo();
+		static void dispose();
 
         static const ::rtl::OUString FEAT_PREFIX;
         static const ::rtl::OUString FEAT_SEPARATOR;

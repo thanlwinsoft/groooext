@@ -22,14 +22,45 @@
  * for a copy of the LGPLv3 License.
  *
  ************************************************************************/
-#ifndef graphiteooo_hxx
-#define graphiteooo_hxx
 
-#include "com/sun/star/beans/XPropertySet.hpp"
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
-namespace org { namespace sil { namespace graphite {
-    extern const char * SAL_DISABLE_GRAPHITE;
-}}}
+#include "sal/config.h"
+#include "uno/lbnames.h"
+#include "uno/environment.hxx"
+#include "rtl/string.hxx"
+#include "cppuhelper/implementationentry.hxx"
 
-#endif
+#include "groooDebug.hxx"
 
+extern "C" {
+SAL_DLLPUBLIC_IMPORT
+	void SAL_CALL component_getImplementationEnvironment(
+		const char ** envTypeName, uno_Environment **);
+}
+
+int main(int /*argc*/, char ** /*argv*/)
+{
+	const char * envTypeName = NULL;
+	uno_Environment * unoEnvironment = NULL;
+	component_getImplementationEnvironment(&envTypeName, &unoEnvironment);
+
+	if (envTypeName)
+	{
+		if (strcmp(envTypeName, "TMP_CPPU_ENV") == 0)
+		{
+			printf("Invalid Environment: %s\n", envTypeName);
+			return 2;
+		}
+		printf("Environment: %s\n", envTypeName);
+		::rtl::OUString ouEnvTypeName = ::rtl::OUString::createFromAscii(envTypeName);
+		return 0;
+	}
+	else
+	{
+		printf("No environment\n");
+	}
+	return 1;
+}

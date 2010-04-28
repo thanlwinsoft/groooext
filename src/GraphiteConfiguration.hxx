@@ -17,8 +17,10 @@
 #ifndef GRAPHITECONFIGURATION_HXX
 #define GRAPHITECONFIGURATION_HXX
 
-#include "sal/typesizes.h"
-#include "sal/config.h"
+#ifdef SAL_UNX
+#include <sal/types.h>
+#endif
+#include <sal/config.h>
 #include "cppuhelper/implementationentry.hxx"
 #include "cppuhelper/implbase1.hxx"
 #include "cppuhelper/queryinterface.hxx"

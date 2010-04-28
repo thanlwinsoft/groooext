@@ -3,13 +3,25 @@
     <version value="@graphiteooo_VERSION_MAJOR@.@graphiteooo_VERSION_MINOR@.@MERCURIAL_VERSION@"/>
     <!-- Identifier should match that used for the AddOn service -->
     <identifier value="org.sil.graphite.GraphiteOptions"/>
+    <platform value="@EXTENSION_PLATFORM@" />
     <dependencies>
         <OpenOffice.org-minimal-version xmlns:d="http://openoffice.org/extensions/description/2006" d:name="OpenOffice.org 3.2" value="3.2"/>
     </dependencies>
+	<!--
+	<registration>
+        <simple-license accept-by="admin" default-license-id="lic-en-US" >
+			<license-text xlink:href="l10n/license_en-US.txt" lang="en-US" license-id="lic-en-US"/>
+		</simple-license>
+	</registration>
+	-->
     <display-name>
         <name lang="en">Graphite Font Options</name>
     </display-name>
+	<extension-description>
+		<src lang="en-US" xlink:href="l10n/description_en-US.txt"/>
+	</extension-description>
     <publisher>
         <name lang="en" xlink:href="http://www.thanlwinsoft.org/">ThanLwinSoft.org</name>
+		<name lang="en" xlink:href="http://www.sil.org/">SIL</name>
     </publisher>
 </description>

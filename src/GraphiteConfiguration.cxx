@@ -14,6 +14,7 @@
    Boston, MA 02110-1301, USA.
 */
 #include <cassert>
+#include "groooDebug.hxx"
 #include "GraphiteConfiguration.hxx"
 #include "com/sun/star/beans/PropertyValue.hpp"
 #include "com/sun/star/beans/PropertyState.hpp"

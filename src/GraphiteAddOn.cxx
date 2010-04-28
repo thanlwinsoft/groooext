@@ -35,7 +35,6 @@
 
 #include <cstdio>
 
-#include "sal/typesizes.h"
 #include "sal/config.h"
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
@@ -58,6 +57,7 @@
 #include "com/sun/star/uno/RuntimeException.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 
+#include "groooDebug.hxx"
 #include "GraphiteAddOn.hxx"
 #include "FeatureDialogEventHandler.hxx"
 
@@ -131,7 +131,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::initialize( const css::uno::Seq
 }
 
 // ::com::sun::star::frame::XDispatch:
-void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL& aURL, const css::uno::Sequence< css::beans::PropertyValue >& aArguments ) throw(css::uno::RuntimeException)
+void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL& aURL, const css::uno::Sequence< css::beans::PropertyValue >& /*aArguments*/ ) throw(css::uno::RuntimeException)
 {
     if ( aURL.Protocol.equalsAscii("org.sil.graphite.graphiteoptions:") )
     {
@@ -148,9 +148,11 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
                     xInfoProvider( css::deployment::PackageInformationProvider::get( m_xContext) );
                 rtl::OUString sLocation = xInfoProvider->getPackageLocation(
                     rtl::OUString::createFromAscii( "org.sil.graphite.GraphiteOptions" ) );
-                rtl::OString aLocation(128);
+                rtl::OString aLocation;
                 sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, 128);
-                fprintf(stderr, "AddOn location %s\n", aLocation.getStr());
+#ifdef GROOO_DEBUG
+                logMsg("AddOn location %s\n", aLocation.getStr());
+#endif
                 if (m_xModel.is())
                 {
                     css::uno::Sequence<css::uno::Any> args(1);
@@ -161,7 +163,9 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
                     css::uno::Reference<css::awt::XDialogProvider2> xDialogProvider(dialogProvider, ::css::uno::UNO_QUERY);
                     if (xDialogProvider.is())
                     {
-                        fprintf(stderr, "Have dialogprovider\n");
+#ifdef GROOO_DEBUG
+                        logMsg("Have dialogprovider\n");
+#endif
                         ::rtl::OUString dialogPath(RTL_CONSTASCII_USTRINGPARAM("/dialogs/GraphiteFeatures.xdl"));
                         ::rtl::OUString dialogUrl(sLocation + dialogPath);
                         css::uno::Reference<org::sil::graphite::FeatureDialogEventHandler> eventHandler(new org::sil::graphite::FeatureDialogEventHandler(m_xContext, m_xModel, sLocation));
@@ -182,7 +186,9 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
                             if (xTopWindow.is())
                                 xTopWindow.get()->addTopWindowListener(xTopWindowListener);
                             short status = xDialog.get()->execute();
-                            fprintf(stderr, "FeatureDialog returned %d\n", status);
+#ifdef GROOO_DEBUG
+                            logMsg("FeatureDialog returned %d\n", status);
+#endif
                             if (status == 1) // OK button pressed
                             {
                                 eventHandler.get()->setFontNames();
@@ -195,9 +201,11 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
             }
             catch (css::uno::RuntimeException e)
             {
-                rtl::OString msg(128);
+                rtl::OString msg;
                 e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
-                fprintf(stderr, "Exception %s\n", msg.getStr());
+#ifdef GROOO_DEBUG
+                logMsg("Exception %s\n", msg.getStr());
+#endif
             }
             return;
         }
@@ -208,14 +216,14 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
     }
 }
 
-void SAL_CALL org::sil::graphite::GraphiteAddOn::addStatusListener( const css::uno::Reference< css::frame::XStatusListener >& xControl, const css::util::URL& aURL ) throw (css::uno::RuntimeException)
+void SAL_CALL org::sil::graphite::GraphiteAddOn::addStatusListener( const css::uno::Reference< css::frame::XStatusListener >& /*xControl*/, const css::util::URL& /*aURL*/ ) throw (css::uno::RuntimeException)
 {
-    // add your own code here
+    
 }
 
-void SAL_CALL org::sil::graphite::GraphiteAddOn::removeStatusListener( const css::uno::Reference< css::frame::XStatusListener >& xControl, const css::util::URL& aURL ) throw (css::uno::RuntimeException)
+void SAL_CALL org::sil::graphite::GraphiteAddOn::removeStatusListener( const css::uno::Reference< css::frame::XStatusListener >& /*xControl*/, const css::util::URL& /*aURL*/ ) throw (css::uno::RuntimeException)
 {
-    // add your own code here
+    
 }
 
 // com.sun.star.uno.XServiceInfo:
@@ -227,7 +235,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::removeStatusListener( const css
 ::sal_Bool SAL_CALL org::sil::graphite::GraphiteAddOn::supportsService(::rtl::OUString const & serviceName) throw (css::uno::RuntimeException)
 {
 #ifdef GROOO_DEBUG
-    rtl::OString serviceNameString(32);
+    rtl::OString serviceNameString;
     serviceName.convertToString(&serviceNameString, RTL_TEXTENCODING_UTF8, 32);
     printf("Command=%s\n", serviceNameString.getStr());
 #endif
@@ -245,11 +253,11 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::GraphiteAddOn
 }
 
 // ::com::sun::star::frame::XDispatchProvider:
-css::uno::Reference< css::frame::XDispatch > SAL_CALL org::sil::graphite::GraphiteAddOn::queryDispatch( const css::util::URL& aURL, const ::rtl::OUString& sTargetFrameName, sal_Int32 nSearchFlags ) throw(css::uno::RuntimeException)
+css::uno::Reference< css::frame::XDispatch > SAL_CALL org::sil::graphite::GraphiteAddOn::queryDispatch( const css::util::URL& aURL, const ::rtl::OUString& /*sTargetFrameName*/, sal_Int32 /*nSearchFlags*/ ) throw(css::uno::RuntimeException)
 {
 #ifdef GROOO_DEBUG
-    ::rtl::OString utfPath(128);
-    ::rtl::OString utfProtocol(128);
+    ::rtl::OString utfPath;
+    ::rtl::OString utfProtocol;
     aURL.Path.convertToString(&utfPath, RTL_TEXTENCODING_UTF8, 32);
     aURL.Protocol.convertToString(&utfProtocol, RTL_TEXTENCODING_UTF8, 32);
     printf("GraphiteAddOn::queryDispatch %s %s frame %d\n", utfProtocol.getStr(), utfPath.getStr(), m_xFrame.is());
@@ -300,7 +308,7 @@ namespace org { namespace sil { namespace graphite { namespace graphiteaddon {
 css::uno::Sequence< ::rtl::OUString > SAL_CALL _getSupportedServiceNames()
 {
 #ifdef GROOO_DEBUG
-    printf("GraphiteAddOn _getSupportedServiceNames\n");
+//    printf("GraphiteAddOn _getSupportedServiceNames\n");
 #endif
     css::uno::Sequence< ::rtl::OUString > s(1);
     s[0] = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(

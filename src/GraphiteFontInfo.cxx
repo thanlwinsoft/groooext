@@ -14,14 +14,25 @@
    Boston, MA 02110-1301, USA.
 */
 
+#include "groooDebug.hxx"
 #include "GraphiteFontInfo.hxx"
 
 #include <cstdio>
 #include <string>
 #include <map>
 #include <cassert>
+
 #include <graphite/FileFont.h>
+#ifdef WIN32
+#include <windows.h>
+#include <WinFont.h>
+#endif
 #include "com/sun/star/uno/Exception.hpp"
+
+// For Windows
+#ifdef WIN32 // Is this always correct?
+#define LITTLE_ENDIAN
+#endif
 
 namespace css = ::com::sun::star;
 
@@ -74,7 +85,11 @@ static bool isValidChar(char c)
     else  // treat it as an unsigned integer
     {
         char aInt[12]; // should be sufficient for any 32 bit integer even with sign
+#ifdef _MSC_VER
+		_snprintf_s(aInt, 12, 12, "%lu", id);
+#else
         snprintf(aInt, 12, "%lu", id);
+#endif
         return ::rtl::OUString::createFromAscii(aInt);
     }
 }
@@ -82,7 +97,11 @@ static bool isValidChar(char c)
 ::rtl::OUString GraphiteFontInfo::featSetting2OUString(sal_Int32 setting)
 {
     char aInt[12]; // should be sufficient for any 32 bit integer even with sign
+#ifdef _MSC_VER
+	_snprintf_s(aInt, 12, 12, "%ld", setting);
+#else
     snprintf(aInt, 12, "%ld", setting);
+#endif
     return ::rtl::OUString::createFromAscii(aInt);
 }
 
@@ -142,12 +161,29 @@ class FTGraphiteFontInfo : public GraphiteFontInfo
         virtual ~FTGraphiteFontInfo();
         virtual sal_Bool isGraphiteFont(const ::rtl::OUString & fontName);
         virtual gr::Font * loadFont(const ::rtl::OUString & fontName);
+		virtual void unloadFont(gr::Font * font) { delete font; };
     private:
         std::map<std::string, std::string> mFontMap;
         FT_Library mLibrary;
 };
 #endif
 
+#ifdef WIN32
+class WinGraphiteFontInfo : public GraphiteFontInfo
+{
+	public:
+        WinGraphiteFontInfo();
+        virtual ~WinGraphiteFontInfo();
+        virtual sal_Bool isGraphiteFont(const ::rtl::OUString & fontName);
+        virtual gr::Font * loadFont(const ::rtl::OUString & fontName);
+		virtual void unloadFont(gr::Font * font);
+    private:
+		std::map< ::rtl::OUString, gr::WinFont* > mFontMap;
+		HDC mHdc;
+		HFONT mhFontNew;
+		HFONT mhFontOld;
+};
+#endif
 }}}
 
 org::sil::graphite::GraphiteFontInfo &
@@ -158,12 +194,22 @@ org::sil::graphite::GraphiteFontInfo::getFontInfo()
     sInstance = new FTGraphiteFontInfo();
     return *sInstance;
 #else
-#if SAL_W32
-    
+#ifdef SAL_W32
+    sInstance = new WinGraphiteFontInfo();
+	return *sInstance;
 #else
 #error Unsupported
 #endif
 #endif
+}
+
+void org::sil::graphite::GraphiteFontInfo::dispose()
+{
+	if (sInstance)
+	{
+		delete sInstance;
+		sInstance = NULL;
+	}
 }
 
 #ifdef SAL_UNX
@@ -195,7 +241,9 @@ gr::Font * org::sil::graphite::FTGraphiteFontInfo::loadFont(const ::rtl::OUStrin
         }
         catch (...)
         {
-            fprintf(stderr, "Failed to create gr::FileFont %s\n", asciiFontName.getStr());
+#ifdef GROOO_DEBUG
+            logMsg("Failed to create gr::FileFont %s\n", asciiFontName.getStr());
+#endif
         }
     }
     return NULL;
@@ -215,7 +263,9 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
     {
         if (!FcInit())
         {
-            fprintf(stderr, "Failed to init Fontconfig\n");
+#ifdef GROOO_DEBUG
+            logMsg("Failed to init Fontconfig\n");
+#endif
             return isGraphite;
         }
         FcConfig * fcConfig = FcConfigGetCurrent();
@@ -227,7 +277,7 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
         if (!FcPatternAdd(fcPattern, "family", fcFontNameValue, FcFalse))
         {
 #ifdef GROOO_DEBUG
-            fprintf(stderr, "Failed to add to pattern\n");
+            logMsg("Failed to add to pattern\n");
 #endif
         }
         FcResult fcResult = FcResultMatch;
@@ -239,7 +289,7 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
             (strcasecmp(family,  asciiFontName.getStr()) != 0)))
         {
 #ifdef GROOO_DEBUG
-             fprintf(stderr, "Failed to match %s %d\n", asciiFontName.getStr(), fcResult);
+             logMsg("Failed to match %s %d\n", asciiFontName.getStr(), fcResult);
 #endif
         }
         else
@@ -262,7 +312,7 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
                         isGraphite = sal_True;
                         mFontMap[asciiFontName.getStr()] = fontFileName;
 #ifdef GROOO_DEBUG
-                        fprintf(stderr, "Font file %s %s\n", asciiFontName.getStr(), fontFileName);
+                        logMsg("Font file %s %s\n", asciiFontName.getStr(), fontFileName);
 #endif
                     }
                     else
@@ -282,3 +332,109 @@ org::sil::graphite::FTGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & f
 
 #endif
 
+
+#ifdef WIN32
+	
+org::sil::graphite::WinGraphiteFontInfo::WinGraphiteFontInfo()
+: mHdc(NULL), mhFontNew(NULL), mhFontOld(NULL)
+{
+
+}
+
+org::sil::graphite::WinGraphiteFontInfo::~WinGraphiteFontInfo()
+{
+	std::map< ::rtl::OUString, gr::WinFont* >::iterator i = mFontMap.begin();
+	while (i != mFontMap.end())
+	{
+		if (i->second != NULL)
+			delete i->second;
+		++i;
+	}
+	mFontMap.clear();
+}
+
+LOGFONTW createLogFontFromName(const ::rtl::OUString & fontName)
+{
+	LOGFONTW lf;
+	memset(&lf, 0, sizeof(lf));
+	lf.lfQuality = CLEARTYPE_QUALITY;
+	lf.lfPitchAndFamily = DEFAULT_PITCH;
+	lf.lfItalic = false;
+	lf.lfHeight = 12;
+	lf.lfWidth = 0;
+	lf.lfWeight = FW_DONTCARE;
+	lf.lfCharSet = DEFAULT_CHARSET;
+	lf.lfUnderline = false;
+
+	for (int i = 0; i < fontName.getLength() && i < LF_FACESIZE - 1; i++)
+		lf.lfFaceName[i] = fontName[i];
+	// name should already be null terminated from the memset above
+	return lf;
+}
+
+sal_Bool org::sil::graphite::WinGraphiteFontInfo::isGraphiteFont(const ::rtl::OUString & fontName)
+{
+	if (mFontMap.find(fontName) != mFontMap.end())
+		return (mFontMap.find(fontName)->second != NULL);
+
+	LOGFONTW lf = createLogFontFromName(fontName);
+	HFONT hFontNew = CreateFontIndirectW(&lf);
+	// Using NULL means the DC is not associated with a window, which is fine for just
+	// getting FeatureInfo
+	if (!mHdc)
+		mHdc = GetDC(NULL);
+
+	HFONT hFontOld = (HFONT) SelectObject(mHdc, hFontNew);
+
+	// test the font
+	if (gr::WinFont::FontHasGraphiteTables(mHdc))
+		mFontMap[fontName] = new gr::WinFont(mHdc);
+	else
+		mFontMap[fontName] = NULL;
+
+	SelectObject(mHdc, hFontOld);
+	DeleteObject(hFontNew);
+	DeleteDC(mHdc);
+	mHdc = NULL;
+
+	return (mFontMap[fontName] != NULL);
+}
+
+gr::Font * org::sil::graphite::WinGraphiteFontInfo::loadFont(const ::rtl::OUString & fontName)
+{
+	gr::WinFont * winFont = NULL;
+	if (mFontMap.find(fontName) != mFontMap.end())
+	{
+		winFont = mFontMap.find(fontName)->second;
+		if (winFont == NULL) return NULL;
+	}
+	LOGFONTW lf = createLogFontFromName(fontName);
+	// if these asserts fire, it probably means unloadFont wasn't called after the last loadFont
+	assert(mhFontNew == NULL);
+	assert(mhFontOld == NULL);
+	mhFontNew = CreateFontIndirectW(&lf);
+	if (!mHdc)
+		mHdc = GetDC(NULL);
+	mhFontOld = (HFONT) SelectObject(mHdc, mhFontNew);
+
+	if (winFont == NULL)
+		winFont = new gr::WinFont(mHdc);
+
+	winFont->replaceDC(mHdc);
+
+	return winFont;
+}
+
+void org::sil::graphite::WinGraphiteFontInfo::unloadFont(gr::Font * font)
+{
+	gr::WinFont * winFont = reinterpret_cast<gr::WinFont*>(font);
+	winFont->restoreDC();
+	SelectObject(mHdc, mhFontOld);
+	DeleteObject(mhFontNew);
+	DeleteDC(mHdc);
+	mHdc = NULL;
+	mhFontNew = NULL;
+	mhFontOld = NULL;
+}
+
+#endif
