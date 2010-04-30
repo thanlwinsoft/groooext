@@ -1,0 +1,4 @@
+0.0.x	23 April 2010
+	Initial Version with Graphite Enable/Disable support
+	Graphite addition to context menu giving Feature Selection Dialog.
+

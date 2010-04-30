@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- oor:name must be identical to the filename of this xcs file //-->
+<oor:component-schema xmlns:oor="http://openoffice.org/2001/registry"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  oor:name="GraphiteLocalization"
+  oor:package="org.sil.graphite" xml:lang="en-US">
+    <info>
+        <author>Keith Stribley</author>
+        <desc>Contains the localized text used in the Graphite OpenOffice extension.</desc>
+    </info>
+    <templates>
+		<group oor:name="Options">
+			<info>
+                <desc>Strings used in Graphite Options dialog.</desc>
+            </info>
+            <prop oor:name="GraphiteIsCurrentlyEnabled" oor:type="xs:string" oor:localized="true" oor:nillable="false">
+				<info>
+				  	<desc>The localized name which is displayed when Graphite is enabled.</desc>
+				</info>
+			</prop>
+			<prop oor:name="GraphiteIsCurrentlyDisabled" oor:type="xs:string" oor:localized="true" oor:nillable="false">
+				<info>
+				  	<desc>The localized name which is displayed when Graphite is disabled.</desc>
+				</info>
+			</prop>
+		</group>
+        <group oor:name="Features">
+            <info>
+                <desc>Graphite Features</desc>
+            </info>
+            <prop oor:name="GraphiteFeaturesMenuLabel" oor:type="xs:string" oor:localized="true" oor:nillable="false">
+				<info>
+				  	<desc>The localized name which is displayed in the context menu for the Graphtie Features Dialog.</desc>
+				</info>
+			</prop>
+			<prop oor:name="DefaultFeature" oor:type="xs:string" oor:localized="true" oor:nillable="false">
+				<info>
+				  	<desc>The localized name which is appended to default feature settings.</desc>
+				</info>
+			</prop>
+        </group>
+    </templates>
+    <component>
+        <group oor:name="OptionsLocalization" type="Options">
+        </group>
+        <group oor:name="FeaturesLocalization" type="Features">
+        </group>
+    </component>
+</oor:component-schema>
+

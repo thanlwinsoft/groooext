@@ -1,0 +1,43 @@
+INSTALL
+
+1. Install the OpenOffice SDK for your platform
+
+2. Setup the SDK and run the script to setup the environment variables.
+	On Linux this is found in /opt/openoffice.org/basis3.2/sdk/setsdkenv_unix
+	or /usr/lib/openoffice/basis3.2/sdk/setsdkenv_unix
+	On Windows this is found in 
+	C:\Program Files\OpenOffice.org 3\Basis\sdk\setsdkenv_windows.bat
+	These scripts will generate another script somewhere in your home directory.
+    e.g.
+	/home/USERNAME/openoffice.org3.2_sdk/HOSTNAME/setsdkenv_unix.sh
+	C:\Users\USERNAME\AppData\Roaming\openoffice.org3.2_sdk\setsdkenv_windows.bat
+
+	Run this script to setup your environment variables correctly.
+
+3. Generate build files for your platform using cmake. 
+	Run cmake with no options to find out the available generators on your
+	platform. Choose one and then use it to setup the build.
+	e.g. on Linux:
+	mkdir build && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+	make
+	make test
+
+	e.g. on Windows:
+	
+	mkdir build
+	cmake -G "Visual Studio 9 2008" ..
+	
+	Open the build/graphiteooo.sln in Visual Studio.
+
+	or
+
+	mkdir nmakebuild
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+	nmake
+	nmake test
+
+	Open the generated Solution file in Visual Studio and build.
+
+4. Install the graphiteooo.oxt file from the build directory using the
+   	Extensions Manager in OpenOffice.
+

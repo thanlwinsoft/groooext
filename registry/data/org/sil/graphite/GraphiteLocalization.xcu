@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:component-data oor:name="GraphiteLocalization" oor:package="org.sil.graphite"
+  xmlns:oor="http://openoffice.org/2001/registry"
+  xmlns:xs="http://www.w2.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <node oor:name="OptionsLocalization">
+    	<prop oor:name="GraphiteIsCurrentlyEnabled">
+    		<value xml:lang="en-US">Graphite is currently enabled.</value>
+    	</prop>
+    	<prop oor:name="GraphiteIsCurrentlyDisabled">
+    		<value xml:lang="en-US">Graphite is currently disabled.</value>
+    	</prop>
+    </node>
+    <node oor:name="FeaturesLocalization">
+    	<prop oor:name="GraphiteFeaturesMenuLabel">
+    		<value xml:lang="en-US">Graphite Features...</value>
+    	</prop>
+    	<prop oor:name="DefaultFeature">
+    		<value xml:lang="en-US"> (Default)</value>
+    	</prop>
+    </node>
+</oor:component-data>
+
