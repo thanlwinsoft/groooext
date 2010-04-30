@@ -320,13 +320,14 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
 #endif
     m_xController.set(m_xModel->getCurrentController());
     if (!m_xController.is()) return;
-    css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
-    css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
+
+    //css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
+    //css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
     css::uno::Reference< css::awt::XWindow> xCheckBoxWindow(m_xUpdateStyle, css::uno::UNO_QUERY);
 
-    xTextCursorSupplier.set(m_xController, css::uno::UNO_QUERY);
-    if (xTextCursorSupplier.is())
-        xTextCursor.set(xTextCursorSupplier->getViewCursor());
+   // xTextCursorSupplier.set(m_xController, css::uno::UNO_QUERY);
+    //if (xTextCursorSupplier.is())
+    //    xTextCursor.set(xTextCursorSupplier->getViewCursor());
     ::rtl::OUString rootName = ::rtl::OUString::createFromAscii("Fonts");
     css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode = xMutableDataModel.get()->createNode(css::uno::Any(rootName), sal_False);
     xMutableDataModel.get()->setRoot(rootNode);
@@ -355,12 +356,13 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
         }
     }
 
-    if (xTextCursor.is())
+    css::uno::Reference< css::beans::XPropertySet> xTextProperties(getTextPropertiesFromModel(
+			m_xModel, ));
+    if (xTextProperties.is())
     {
 #ifdef GROOO_DEBUG
-        logMsg("Have text cursor\n");
+        logMsg("Have text properties\n");
 #endif
-        css::uno::Reference< css::beans::XPropertySet> xTextProperties(xTextCursor, css::uno::UNO_QUERY);
 
 
         css::uno::Any aFontName = xTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);

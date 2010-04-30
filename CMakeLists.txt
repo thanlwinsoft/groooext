@@ -120,10 +120,14 @@ set_source_files_properties(src/GraphiteAddOn.cxx OBJECT_DEPENDS
 
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM true) # Leave the IDL files
 
+# Using a relative path is a work around for nmake, which doesn't like
+# pathnames with spaces even when quoted
+file(RELATIVE_PATH OO_SDK_CPPUMAKER_NATIVE ${OO_SDK_URE_BIN} ${OO_SDK_CPPUMAKER} )
+
 add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/com/sun/star/lang/XInitialization.hpp
-	COMMAND "${OO_SDK_CPPUMAKER}" "-O${PROJECT_BINARY_DIR}" -Gc -BUCR ${OO_SDK_RDB}/types.rdb ${OO_SDK_RDB}/services.rdb ${OO_BASIS_PROGRAM}/offapi.rdb
+	COMMAND ${OO_SDK_CPPUMAKER_NATIVE} -O${PROJECT_BINARY_DIR} -Gc -BUCR ${OO_SDK_RDB}/types.rdb ${OO_SDK_RDB}/services.rdb ${OO_BASIS_PROGRAM}/offapi.rdb
 	WORKING_DIRECTORY ${OO_SDK_URE_BIN}
-	COMMENT "Generates the OOo API header files from the IDL files\n${OO_SDK_CPPUMAKER} -O${PROJECT_BINARY_DIR} -Gc -BUCR ${OO_SDK_RDB}/types.rdb ${OO_SDK_RDB}/services.rdb ${OO_BASIS_PROGRAM}/offapi.rdb"
+	COMMENT "Generate the OOo API header files from the IDL files - may be slow"
 	VERBATIM)
 
 
@@ -229,10 +233,9 @@ add_custom_target(ooextension ALL COMMAND ${ZIP} ${PROJECT_BINARY_DIR}/graphiteo
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
 
 # clean the headers generated from IDL
-add_custom_target(distclean
+add_custom_target(idlclean
 	COMMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/com
 	COMMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/drafts
-	DEPENDS clean
 	COMMENT clean the IDL generated headers)
 
 add_dependencies(copy_files graphiteooo)

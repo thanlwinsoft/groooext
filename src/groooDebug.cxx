@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <string>
 
 #ifdef WIN32
 #include <windows.h>
@@ -38,10 +39,33 @@
 
 #include "groooDebug.hxx"
 
-namespace css = ::com::sun::star;
-namespace osg = ::org::sil::graphite;
-
 namespace org { namespace sil { namespace graphite {
+
+#ifdef GROOO_DEBUG
+FILE * grLogFile = NULL;
+FILE * grLog()
+{
+#ifdef _MSC_VER
+	if (grLogFile == NULL) {
+		size_t envBufSize;
+		char * envBuf;
+		if (_dupenv_s(&envBuf, &envBufSize, "TEMP"))
+			return NULL;
+		::std::string logFileName(envBuf);
+		logFileName.append("\\graphiteoooext.log");
+		//if (fopen_s(&grLogFile, logFileName.c_str(),"w"))
+		//	grLogFile = NULL;
+#pragma warning(disable: 4996)
+		// don't use fopen_s - it will lock the file
+		grLogFile = fopen(logFileName.c_str(), "w");
+	}
+    else fflush(grLogFile);
+    return grLogFile;
+#else
+    return stdout;
+#endif
+}
+#endif
 
 	void logMsg(const char * msg, ...)
 	{
@@ -52,48 +76,12 @@ namespace org { namespace sil { namespace graphite {
 		char buffer[1024];
 		if (vsnprintf_s(buffer, 1024, 1024, msg, args) > 0)
 			OutputDebugStringA(buffer);
-#else
-		vfprintf(stderr, format, args);
 #endif
+		if (grLog())
+			vfprintf(grLog(), msg, args);
 		va_end(args);
 #endif
 	}
 
 }}}
 
-void org::sil::graphite::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > propSet)
-{
-    css::uno::Reference< css::beans::XPropertySetInfo>xPropSetInfo(propSet.get()->getPropertySetInfo());
-    css::uno::Sequence< css::beans::Property> properties = xPropSetInfo.get()->getProperties();
-    for (int i = 0; i < properties.getLength(); i++)
-    {
-        ::rtl::OString propName;
-        ::rtl::OString propValue;
-        properties[i].Name.convertToString(&propName, RTL_TEXTENCODING_UTF8, 128);
-        try
-        {
-            ::css::uno::Any aValue = propSet.get()->getPropertyValue(properties[i].Name);
-            if (aValue.hasValue() && aValue.has< ::rtl::OUString>())
-            {
-                ::rtl::OUString value = aValue.get< ::rtl::OUString>();
-                value.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-            }
-            else
-            {
-                propValue = "?";
-            }
-        }
-        catch (::com::sun::star::lang::WrappedTargetException we)
-        {
-            css::uno::Exception e = we.TargetException.get<css::uno::Exception>();
-            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-        }
-        catch (::com::sun::star::uno::Exception e)
-        {
-            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
-        }
-#ifdef GROOO_DEBUG
-        logMsg("Property name:%s value:%s\n", propName.getStr(), propValue.getStr());
-#endif
-    }
-}

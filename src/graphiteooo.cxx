@@ -27,6 +27,15 @@
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
 #include "cppuhelper/implementationentry.hxx"
+#include "com/sun/star/text/XTextViewCursor.hpp"
+#include "com/sun/star/text/XTextViewCursorSupplier.hpp"
+#include "com/sun/star/sheet/XCellRangeReferrer.hpp"
+#include "com/sun/star/table/XCellRange.hpp"
+#include "com/sun/star/lang/XComponent.hpp"
+#include "com/sun/star/drawing/XShapes.hpp"
+#include "com/sun/star/drawing/XShape.hpp"
+#include "com/sun/star/frame/XFrame.hpp"
+#include "com/sun/star/frame/XModel.hpp"
 
 #ifdef WIN32
 #include <windows.h>
@@ -44,6 +53,148 @@ const char * ::org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE"
 
 namespace css = ::com::sun::star;
 namespace osg = ::org::sil::graphite;
+
+void osg::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > propSet)
+{
+    css::uno::Reference< css::beans::XPropertySetInfo>xPropSetInfo(propSet.get()->getPropertySetInfo());
+    css::uno::Sequence< css::beans::Property> properties = xPropSetInfo.get()->getProperties();
+    for (int i = 0; i < properties.getLength(); i++)
+    {
+        ::rtl::OString propName;
+        ::rtl::OString propValue;
+        properties[i].Name.convertToString(&propName, RTL_TEXTENCODING_UTF8, 128);
+        try
+        {
+            ::css::uno::Any aValue = propSet.get()->getPropertyValue(properties[i].Name);
+            if (aValue.hasValue() && aValue.has< ::rtl::OUString>())
+            {
+                ::rtl::OUString value = aValue.get< ::rtl::OUString>();
+                value.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
+            }
+            else
+            {
+                propValue = "?";
+            }
+        }
+        catch (::com::sun::star::lang::WrappedTargetException we)
+        {
+            css::uno::Exception e = we.TargetException.get<css::uno::Exception>();
+            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
+        }
+        catch (::com::sun::star::uno::Exception e)
+        {
+            e.Message.convertToString(&propValue, RTL_TEXTENCODING_UTF8, propValue.getLength());
+        }
+#ifdef GROOO_DEBUG
+        logMsg("Property name:%s value:%s\n", propName.getStr(), propValue.getStr());
+#endif
+    }
+}
+
+
+css::uno::Reference< css::beans::XPropertySet> 
+osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel,
+								css::uno::Reference<css::view::XSelectionSupplier> xSelection)
+{
+	css::uno::Reference< css::beans::XPropertySet> xTextProperties; // to hold return value
+    css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
+    css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
+	css::uno::Reference<css::sheet::XCellRangeReferrer> xCellRangeReferrer;
+	css::uno::Reference<css::frame::XController> xController(xModel->getCurrentController(), css::uno::UNO_QUERY);
+    if (xController.is())
+    {
+#ifdef GROOO_DEBUG
+        logMsg("Have controller\n");
+#endif
+		// For Writer
+        xTextCursorSupplier.set(xController, css::uno::UNO_QUERY);
+        
+		// for Calc
+		xCellRangeReferrer.set(xController, css::uno::UNO_QUERY);
+    }
+	css::uno::Any aSelection;
+	if (xSelection.is())
+    {
+        aSelection = xSelection.get()->getSelection();
+#ifdef GROOO_DEBUG
+        ::rtl::OString aTypeName;
+        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, 128);
+        logMsg("Selection type: %s\n", aTypeName.getStr());
+#endif
+
+		css::uno::Reference< css::beans::XPropertySet> xTextProperties;
+		if (aSelection.has<css::uno::Reference<css::uno::XInterface> >())
+		{
+			css::uno::Reference<css::uno::XInterface> xInterface =
+					aSelection.get<css::uno::Reference<css::uno::XInterface> >();
+			css::uno::Reference<css::drawing::XShapes> xShapes;
+			xShapes.set(xInterface, css::uno::UNO_QUERY);
+			// for the moment only support setting text when only one shape is selected
+			if (xShapes.is() && (xShapes.get()->getCount() == 1) )
+			{
+				xTextProperties.set(xShapes.get()->getByIndex(0), css::uno::UNO_QUERY);
+			}
+			else
+			{
+				xTextCursor.set(xInterface, css::uno::UNO_QUERY);
+				if (xTextCursor.is())
+				{
+					xTextProperties.set(xTextCursor, css::uno::UNO_QUERY);
+#ifdef GROOO_DEBUG
+					logMsg("Have text cursor from selection\n");
+#endif
+				}
+			}
+		}
+		if (!xTextProperties.is())
+		{
+			if (xTextCursorSupplier.is())
+			{
+				xTextCursor.set(xTextCursorSupplier->getViewCursor());
+				if (xTextCursorSupplier.is())
+				{
+	#ifdef GROOO_DEBUG
+					logMsg("Have text cursor\n");
+	#endif
+					xTextProperties.set(xTextCursor, css::uno::UNO_QUERY);
+				}
+			}
+			else if (xCellRangeReferrer.is())
+			{
+				css::uno::Reference< css::table::XCellRange> xCellRange = xCellRangeReferrer.get()->getReferredCells();
+				if (xCellRange.is())
+				{
+					xTextProperties.set(xCellRange, css::uno::UNO_QUERY);
+	#ifdef GROOO_DEBUG
+					logMsg("Have cell range\n");
+	#endif
+				}
+			}
+		}
+	}
+
+	// diagnostic
+	if (!xTextProperties.is())
+    {
+		if (aSelection.has<css::uno::Reference<css::uno::XInterface> >())
+		{
+			css::uno::Reference<css::uno::XInterface> xInterface =
+				aSelection.get<css::uno::Reference<css::uno::XInterface> >();
+			xTextProperties.set(xInterface, css::uno::UNO_QUERY);
+#ifdef GROOO_DEBUG
+			logMsg("Have no cursor text properties %d\n", xTextProperties.is());
+			if (xTextProperties.is())
+				printPropertyNames(xTextProperties);
+			css::uno::Reference<css::drawing::XShapes> xShapes;
+			xShapes.set(xInterface, css::uno::UNO_QUERY);
+			if (xShapes.is())
+				logMsg("Selection has %d shapes\n", xShapes.get()->getCount());
+
+#endif
+		}
+	}
+	return xTextProperties;
+}
 
 // Define the supported services
 static ::cppu::ImplementationEntry const entries[] = {

@@ -26,11 +26,7 @@
 #ifndef grooodebug_hxx
 #define grooodebug_hxx
 
-#include "com/sun/star/beans/XPropertySet.hpp"
-
 namespace org { namespace sil { namespace graphite {
-
-    void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
 
 	void logMsg(const char * msg, ...);
 

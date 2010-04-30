@@ -47,6 +47,7 @@
 #include "com/sun/star/awt/tree/XTreeEditListener.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/view/XSelectionChangeListener.hpp"
+//#include "com/sun/star
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/frame/XModel.hpp"
@@ -141,6 +142,7 @@ private:
     css::uno::Reference< css::lang::XMultiComponentFactory > m_xFactory;
     css::uno::Reference< css::frame::XModel > m_xModel;
     css::uno::Reference< css::frame::XController > m_xController;
+	css::uno::Reference< css::view::XSelectionSupplier > m_xSelectionSupplier;
     css::uno::Reference<css::awt::tree::XTreeControl> m_xTree;
     css::uno::Reference<css::awt::XCheckBox> m_xUpdateStyle;
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;

@@ -178,6 +178,7 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
 			pDisableGraphiteStr = NULL;
 		}
 #endif
+		bool updatedEnvVariable = false;
         if (eventValue.equalsAscii("ok"))
         {
 #ifdef GROOO_DEBUG
@@ -198,13 +199,14 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             {
                 graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_True));
 #ifdef SAL_UNX
-                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "0");
+                updatedEnvVariable = UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "0");
 #endif
 #ifdef WIN32
 				if (status == ERROR_SUCCESS)
 				{
 					status = RegSetValueExA(userEnvKey, SAL_DISABLE_GRAPHITE, 0,
 						REG_EXPAND_SZ, reinterpret_cast<const BYTE*>("0"), 2);
+					updatedEnvVariable = (status == ERROR_SUCCESS);
 				}
 #endif
             }
@@ -212,18 +214,36 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             {
                 graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_False));
 #ifdef SAL_UNX
-                UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "1");
+                updatedEnvVariable = UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "1");
 #endif
 #ifdef WIN32
 				if (status == ERROR_SUCCESS)
 				{
 					status = RegSetValueExA(userEnvKey, SAL_DISABLE_GRAPHITE, 0,
 						REG_EXPAND_SZ, reinterpret_cast<const BYTE*>("1"), 2);
+					updatedEnvVariable = (status == ERROR_SUCCESS);
 				}
 #endif
             }
+			if (updatedEnvVariable == false)
+			{
+                ::rtl::OUString title(RTL_CONSTASCII_USTRINGPARAM("Enable/Disable Graphite"));
+                ::rtl::OUString msg(RTL_CONSTASCII_USTRINGPARAM("Failed to set SAL_DISABLE_GRAPHITE environment variable."));
+#ifdef GROOO_DEBUG
+				logMsg("Failed to set environment variable\n");
+#endif
+				showMessage(xWindowPeer, title, msg);
+				return sal_False;
+			}
+
 #ifdef WIN32
-			if (userEnvKey) RegCloseKey(userEnvKey);
+			if (userEnvKey)
+			{
+				RegCloseKey(userEnvKey);
+				DWORD dMsgResult = 0;
+				LPCTSTR envChangeParam = "Environment";
+				SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)envChangeParam, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &dMsgResult);
+			}
 #endif
             css::uno::Reference< css::util::XChangesBatch > batch(m_config.nameAccess(), css::uno::UNO_QUERY);
             if (batch.is())

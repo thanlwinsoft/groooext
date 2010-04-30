@@ -25,10 +25,20 @@
 #ifndef graphiteooo_hxx
 #define graphiteooo_hxx
 
+#include "com/sun/star/uno/Reference.hxx"
+#include "com/sun/star/frame/XModel.hpp"
+#include "com/sun/star/view/XSelectionSupplier.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 
 namespace org { namespace sil { namespace graphite {
     extern const char * SAL_DISABLE_GRAPHITE;
+
+	void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
+
+	::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet> getTextPropertiesFromModel(
+		::com::sun::star::uno::Reference< ::com::sun::star::frame::XModel > xModel,
+		::com::sun::star::uno::Reference< ::com::sun::star::view::XSelectionSupplier> xSelection);
+
 }}}
 
 #endif

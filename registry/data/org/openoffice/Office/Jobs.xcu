@@ -7,8 +7,8 @@
                   <value>org.sil.graphite.SetupContextMenu</value>
               </prop>
               <node oor:name="Arguments">
-                  <prop oor:name="enable" oor:type="xs:string" oor:op="replace">
-                      <value>1</value>
+                  <prop oor:name="event" oor:type="xs:string" oor:op="replace">
+                      <value>onDocumentOpened</value>
                   </prop>
               </node>
           </node>
