@@ -2,7 +2,7 @@
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
- * Copyright 2010 ThanLwinSoft.org
+ * Copyright 2010 ThanLwinSoft.org & SIL International
  *
  * This file is part of the Graphite extension for OpenOffice.org (GraphiteOOo).
  *
@@ -22,6 +22,7 @@
  * for a copy of the LGPLv3 License.
  *
  ************************************************************************/
+
 
 #ifndef grooodebug_hxx
 #define grooodebug_hxx

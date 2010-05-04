@@ -1,3 +1,21 @@
+#
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# Copyright 2010 ThanLwinSoft.org & SIL International
+#
+# This file is part of the Graphite extension for OpenOffice.org (GraphiteOOo).
+#
+# The GraphiteOOo Extension is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License version 3
+# only, as published by the Free Software Foundation.
+#
+# The GraphiteOOo Extension is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License version 3 for more details
+# (a copy is included in the LICENSE file that accompanied this code).
+#
+
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
 project (graphiteooo)
 enable_language(CXX C)
@@ -24,12 +42,12 @@ find_path(OO_SDK_IDL com/sun/star/udk-modules.idl PATHS ENV OO_SDK_HOME /usr/lib
 find_path(OO_SDK_INCLUDE udkversion.mk PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES include DOC "OO SDK include directory")
 find_library(OO_SDK_UNO_SAL NAMES uno_sal isal PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "SAL library")
 find_library(OO_SDK_UNO_CPPU NAMES uno_cppu icppu PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "CPPU library")
-find_library(OO_SDK_UNO_CPPUHELPER NAMES uno_cppuhelper icppuhelper PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "CPPU helper library")
+find_library(OO_SDK_UNO_CPPUHELPER NAMES uno_cppuhelpergcc3 icppuhelper PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "CPPU helper library")
 
 find_program(OO_SDK_CPPUMAKER cppumaker PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES bin DOC "IDL compiler")
 find_path(OO_SDK_RDB types.rdb PATHS ENV OO_SDK_URE_HOME ENV OO_SDK_HOME PATH_SUFFIXES share/misc misc DOC "URE RDB directory")
 find_path(OO_BASIS_PROGRAM offapi.rdb PATHS ENV OO_SDK_HOME PATH_SUFFIXES ../program DOC "Basis Program directory")
-find_path(OO_SDK_URE_BIN uno.ini PATHS ENV OO_SDK_URE_HOME PATH_SUFFIXES bin DOC "URE bin directory")
+find_path(OO_SDK_URE_BIN version.ini versionrc PATHS ENV OO_SDK_URE_HOME PATH_SUFFIXES bin DOC "URE bin directory")
 find_program(ZIP zip)
 
 include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
@@ -38,13 +56,15 @@ include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
 # Beware: "cannot get uno environments!" - the logic in uno/lbnames.h doesn't
 # work unless CPPU_ENV is set beforehand
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-	add_definitions(-DUNX=1 -DCPPU_ENV=gcc3 -Wall)
+	add_definitions(-DUNX=1 -DLINUX=1 -DCPPU_ENV=gcc3 -Wall)
 	set(BUILD_SHARED_LIBS on)
 	find_package(Freetype)
 	find_package(PkgConfig)
 	pkg_check_modules(FC REQUIRED fontconfig)
 	pkg_check_modules(GR REQUIRED silgraphite)
-	add_definitions(${FC_CFLAGS})
+	add_definitions(${FC_CFLAGS} -I${FREETYPE_INCLUDE_DIR_freetype2})
+	set(GR_DEBUG_LIBRARY ${GR_LIBRARIES})
+	set(GR_RELEASE_LIBRARY ${GR_LIBRARIES})
 	set(GROOO_OUTPUT_DIR "")
 	set(PLATFORM_LIBRARIES "")
 	if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
@@ -77,13 +97,13 @@ endif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 set_directory_properties(PROPERTY COMPILE_DEFINITIONS_DEBUG GROOO_DEBUG=1)
 
 # add the library
-add_library(graphiteooo 
+add_library(graphiteooo
     src/graphiteooo.cxx src/graphiteooo.hxx
-	src/groooDebug.cxx src/groooDebug.hxx
-	src/UnixEnvironmentSetter.cxx src/UnixEnvironmentSetter.hxx
-	src/GraphiteAddOn.cxx src/GraphiteAddOn.hxx
+    src/groooDebug.cxx src/groooDebug.hxx
+    src/UnixEnvironmentSetter.cxx src/UnixEnvironmentSetter.hxx
+    src/GraphiteAddOn.cxx src/GraphiteAddOn.hxx
     src/DialogEventHandler.cxx src/DialogEventHandler.hxx
-	src/FeatureDialogEventHandler.cxx src/FeatureDialogEventHandler.hxx
+    src/FeatureDialogEventHandler.cxx src/FeatureDialogEventHandler.hxx
     src/GraphiteFontInfo.cxx src/GraphiteFontInfo.hxx
     src/GraphiteConfiguration.cxx src/GraphiteConfiguration.hxx
     src/SetupContextMenu.cxx src/SetupContextMenu.hxx)
@@ -96,7 +116,7 @@ set_source_files_properties(src/graphiteooo.hxx src/UnixEnvironmentSetter.hxx sr
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	add_executable(test_unixenvset src/UnixEnvironmentSetter.cxx src/test_UnixEnvironmentSetter.cxx
 		src/groooDebug.cxx src/groooDebug.hxx)
-	add_test(NAME "Test test_unixenvset" COMMAND "$<TARGET_FILE:test_unixenvset>")
+	add_test(NAME "test_unixenvset" COMMAND "$<TARGET_FILE:test_unixenvset>")
 endif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 
 # test graphite font info
@@ -132,7 +152,7 @@ add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/com/sun/star/lang/XInitializatio
 
 
 target_link_libraries(graphiteooo ${OO_SDK_UNO_SAL} ${OO_SDK_UNO_CPPU}
- ${OO_SDK_UNO_CPPUHELPER} ${FREETYPE_LIBRARIES} ${FC_LIBRARIES}  ${GR_LIBRARIES})
+ ${OO_SDK_UNO_CPPUHELPER} ${FREETYPE_LIBRARIES} ${FC_LIBRARIES})
 target_link_libraries(graphiteooo debug ${GR_DEBUG_LIBRARY})
 target_link_libraries(graphiteooo optimized ${GR_RELEASE_LIBRARY})
 
@@ -199,9 +219,9 @@ add_custom_target(copy_files
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX}
 		${PROJECT_BINARY_DIR}/graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX}
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}graphiteooo.pdb
-		${PROJECT_BINARY_DIR}/graphiteooo.pdb
+#	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#		${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}graphiteooo.pdb
+#		${PROJECT_BINARY_DIR}/graphiteooo.pdb
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/l10n/ ${PROJECT_BINARY_DIR}/l10n/
 	)
 

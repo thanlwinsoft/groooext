@@ -2,21 +2,15 @@
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
- * Copyright 2008 by Sun Microsystems, Inc.
+ * Copyright 2010 ThanLwinSoft.org & SIL International
  *
- * OpenOffice.org - a multi-platform office productivity suite
+ * This file is part of the Graphite extension for OpenOffice.org (GraphiteOOo).
  *
- *  $RCSfile: org::sil::graphite::DialogEventHandler.cxx,v $
- *
- * $Revision: 1.7 $
- *
- * This file is part of OpenOffice.org.
- *
- * OpenOffice.org is free software: you can redistribute it and/or modify
+ * The GraphiteOOo Extension is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License version 3
  * only, as published by the Free Software Foundation.
  *
- * OpenOffice.org is distributed in the hope that it will be useful,
+ * The GraphiteOOo Extension is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License version 3 for more details
@@ -145,6 +139,7 @@ private:
 	css::uno::Reference< css::view::XSelectionSupplier > m_xSelectionSupplier;
     css::uno::Reference<css::awt::tree::XTreeControl> m_xTree;
     css::uno::Reference<css::awt::XCheckBox> m_xUpdateStyle;
+    css::uno::Reference< css::beans::XPropertySet> m_xTextProperties;
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
     ::rtl::OUString m_extensionBase;
     ::gr::Font * m_fonts[NUM_SCRIPTS]; // normal, ctl, asian

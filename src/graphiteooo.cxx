@@ -2,7 +2,7 @@
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
- * Copyright 2010 ThanLwinSoft.org
+ * Copyright 2010 ThanLwinSoft.org & SIL International
  *
  * This file is part of the Graphite extension for OpenOffice.org (GraphiteOOo).
  *
@@ -30,7 +30,9 @@
 #include "com/sun/star/text/XTextViewCursor.hpp"
 #include "com/sun/star/text/XTextViewCursorSupplier.hpp"
 #include "com/sun/star/sheet/XCellRangeReferrer.hpp"
+#include "com/sun/star/sheet/XSheetCellRange.hpp"
 #include "com/sun/star/table/XCellRange.hpp"
+#include "com/sun/star/table/XCellCursor.hpp"
 #include "com/sun/star/lang/XComponent.hpp"
 #include "com/sun/star/drawing/XShapes.hpp"
 #include "com/sun/star/drawing/XShape.hpp"
@@ -99,6 +101,7 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 	css::uno::Reference< css::beans::XPropertySet> xTextProperties; // to hold return value
     css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
     css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
+    css::uno::Reference<css::sheet::XSheetCellRange> xSheetCellRange;
 	css::uno::Reference<css::sheet::XCellRangeReferrer> xCellRangeReferrer;
 	css::uno::Reference<css::frame::XController> xController(xModel->getCurrentController(), css::uno::UNO_QUERY);
     if (xController.is())
@@ -122,7 +125,6 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
         logMsg("Selection type: %s\n", aTypeName.getStr());
 #endif
 
-		css::uno::Reference< css::beans::XPropertySet> xTextProperties;
 		if (aSelection.has<css::uno::Reference<css::uno::XInterface> >())
 		{
 			css::uno::Reference<css::uno::XInterface> xInterface =
@@ -144,6 +146,14 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 					logMsg("Have text cursor from selection\n");
 #endif
 				}
+				xSheetCellRange.set(xInterface, css::uno::UNO_QUERY);
+                if (xSheetCellRange.is())
+                {
+                    xTextProperties.set(xSheetCellRange, css::uno::UNO_QUERY);
+#ifdef GROOO_DEBUG
+                    logMsg("Have cell cursor from selection %d\n", xTextProperties.is());
+#endif
+                }
 			}
 		}
 		if (!xTextProperties.is())
@@ -151,13 +161,19 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 			if (xTextCursorSupplier.is())
 			{
 				xTextCursor.set(xTextCursorSupplier->getViewCursor());
-				if (xTextCursorSupplier.is())
+				if (xTextCursor.is())
 				{
-	#ifdef GROOO_DEBUG
-					logMsg("Have text cursor\n");
-	#endif
 					xTextProperties.set(xTextCursor, css::uno::UNO_QUERY);
+#ifdef GROOO_DEBUG
+                    logMsg("Have text cursor %d\n", xTextProperties.is());
+#endif
 				}
+				else
+                {
+#ifdef GROOO_DEBUG
+                    logMsg("Have text cursor supplier but no cursor\n");
+#endif
+                }
 			}
 			else if (xCellRangeReferrer.is())
 			{

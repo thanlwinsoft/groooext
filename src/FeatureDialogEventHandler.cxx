@@ -2,21 +2,15 @@
  *
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  * 
- * Copyright 2008 by Sun Microsystems, Inc.
+ * Copyright 2010 ThanLwinSoft.org & SIL International
  *
- * OpenOffice.org - a multi-platform office productivity suite
+ * This file is part of the Graphite extension for OpenOffice.org (GraphiteOOo).
  *
- *  $RCSfile: org::sil::graphite::FeatureDialogEventHandler.cxx,v $
- *
- * $Revision: 1.7 $
- *
- * This file is part of OpenOffice.org.
- *
- * OpenOffice.org is free software: you can redistribute it and/or modify
+ * The GraphiteOOo Extension is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License version 3
  * only, as published by the Free Software Foundation.
  *
- * OpenOffice.org is distributed in the hope that it will be useful,
+ * The GraphiteOOo Extension is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License version 3 for more details
@@ -36,10 +30,14 @@
 #include "rtl/ustrbuf.hxx"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/beans/XProperty.hpp"
+#include "com/sun/star/beans/Property.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/beans/UnknownPropertyException.hpp"
+#include "com/sun/star/drawing/XShape.hpp"
+#include "com/sun/star/drawing/XShapes.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/uno/Exception.hpp"
+#include "com/sun/star/uno/Sequence.hxx"
 #include "com/sun/star/uno/RuntimeException.hpp"
 #include "cppuhelper/implbase1.hxx"
 #include "com/sun/star/awt/XDialogEventHandler.hpp"
@@ -128,10 +126,11 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::disposing(const css
 #ifdef GROOO_DEBUG
     logMsg("FeatureDialogEventHandler::disposing\n");
 #endif
+    GraphiteFontInfo & grInfo = GraphiteFontInfo::getFontInfo();
     for (int i = 0; i < 3; i++)
         if (m_fonts[i])
         {
-            delete m_fonts[i];
+            grInfo.unloadFont(m_fonts[i]);
             m_fonts[i] = NULL;
         }
 }
@@ -303,7 +302,6 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
                 }
                 ++iFeat;
             }
-			grInfo.unloadFont(grFont);
         }
     }
     else
@@ -312,7 +310,8 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
     }
 }
 
-void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel)
+void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
+    css::uno::Reference<css::awt::tree::XMutableTreeDataModel> xMutableDataModel)
 {
     assert(xMutableDataModel.is());
 #ifdef GROOO_DEBUG
@@ -331,64 +330,154 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
     ::rtl::OUString rootName = ::rtl::OUString::createFromAscii("Fonts");
     css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode = xMutableDataModel.get()->createNode(css::uno::Any(rootName), sal_False);
     xMutableDataModel.get()->setRoot(rootNode);
-    
+
     css::uno::Reference<css::style::XStyleFamiliesSupplier> xStyleFamiliesSupplier(m_xModel, css::uno::UNO_QUERY);
     css::uno::Reference<css::container::XNameContainer> xCharStylesContainer;
     css::uno::Reference<css::container::XNameContainer> xParaStylesContainer;
+    css::uno::Reference<css::container::XNameContainer> xCellStylesContainer;
+    css::uno::Reference<css::container::XNameContainer> xGraphicStylesContainer;
     if (xStyleFamiliesSupplier.is())
     {
         css::uno::Reference<css::container::XNameAccess> xStyleNameAccess(xStyleFamiliesSupplier.get()->getStyleFamilies());
-        css::uno::Any aCharacterStyles = xStyleNameAccess.get()->getByName(::rtl::OUString::createFromAscii("CharacterStyles"));
-        if (aCharacterStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+#ifdef GROOO_DEBUG
+        css::uno::Sequence< ::rtl::OUString > styleFamilyNames = xStyleNameAccess->getElementNames();
+        for (int i = 0; i < styleFamilyNames.getLength(); i++)
         {
-            xCharStylesContainer.set(aCharacterStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            ::rtl::OString familyName;
+            styleFamilyNames[i].convertToString(&familyName, RTL_TEXTENCODING_UTF8, 128);
+            logMsg("StyleFamily: %s\n", familyName.getStr());
+        }
+#endif
+        ::rtl::OUString charStylesName = ::rtl::OUString::createFromAscii("CharacterStyles");
+        if (xStyleNameAccess->hasByName(charStylesName))
+        {
+            css::uno::Any aCharacterStyles = xStyleNameAccess.get()->getByName(charStylesName);
+            if (aCharacterStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+            {
+                xCharStylesContainer.set(aCharacterStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            }
+            else
+            {
+#ifdef GROOO_DEBUG
+                logMsg("CharacterStyles name container not found\n");
+#endif
+            }
         }
         else
         {
 #ifdef GROOO_DEBUG
-            logMsg("CharacterStyles name container not found\n");
+            logMsg("CharacterStyles not found\n");
 #endif
         }
-        css::uno::Any aParagraphStyles = xStyleNameAccess.get()->getByName(::rtl::OUString::createFromAscii("ParagraphStyles"));
-        if (aParagraphStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+        ::rtl::OUString paraStylesName = ::rtl::OUString::createFromAscii("ParagraphStyles");
+        if (xStyleNameAccess->hasByName(paraStylesName))
         {
-            xParaStylesContainer.set(aParagraphStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            css::uno::Any aParagraphStyles = xStyleNameAccess.get()->getByName(paraStylesName);
+            if (aParagraphStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+            {
+                xParaStylesContainer.set(aParagraphStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            }
+        }
+        else
+        {
+#ifdef GROOO_DEBUG
+            logMsg("ParagraphStyles not found\n");
+#endif
+        }
+        // CellStyles
+        ::rtl::OUString cellStylesName = ::rtl::OUString::createFromAscii("CellStyles");
+        if (xStyleNameAccess->hasByName(cellStylesName))
+        {
+            css::uno::Any aCellStyles = xStyleNameAccess.get()->getByName(cellStylesName);
+            if (aCellStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+            {
+                xCellStylesContainer.set(aCellStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            }
+        }
+        else
+        {
+#ifdef GROOO_DEBUG
+            logMsg("CellStyles not found\n");
+#endif
+        }
+        // GraphicStyles
+        ::rtl::OUString graphicsStylesName = ::rtl::OUString::createFromAscii("graphics");
+        if (xStyleNameAccess->hasByName(graphicsStylesName))
+        {
+            css::uno::Any aGraphicsStyles = xStyleNameAccess.get()->getByName(graphicsStylesName);
+            if (aGraphicsStyles.has<css::uno::Reference<css::container::XNameContainer> >())
+            {
+                xGraphicStylesContainer.set(aGraphicsStyles.get<css::uno::Reference<css::container::XNameContainer> >());
+            }
+        }
+        else
+        {
+#ifdef GROOO_DEBUG
+            logMsg("graphics not found\n");
+#endif
         }
     }
 
-    css::uno::Reference< css::beans::XPropertySet> xTextProperties(getTextPropertiesFromModel(
-			m_xModel, ));
-    if (xTextProperties.is())
+    // Note: the document selection supplier is not the same as the dialog one
+    css::uno::Reference<css::view::XSelectionSupplier> xDocSelectionSupplier(m_xController, css::uno::UNO_QUERY);
+    m_xTextProperties.set(getTextPropertiesFromModel(m_xModel, xDocSelectionSupplier));
+
+    if (m_xTextProperties.is())
     {
 #ifdef GROOO_DEBUG
         logMsg("Have text properties\n");
 #endif
 
+        css::uno::Any aFontName;
+        css::uno::Any aFontNameComplex;
+        css::uno::Any aFontNameAsian;
+        ::rtl::OUString ouWestern;
+        ::rtl::OUString ouCtl;
+        ::rtl::OUString ouAsian;
 
-        css::uno::Any aFontName = xTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);
-        addFontFeatures(xMutableDataModel, rootNode, WESTERN_SCRIPT, aFontName.get< ::rtl::OUString>(), ::rtl::OUString());
         ::rtl::OUString complexFontDesc = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(" (CTL)"));
-
-        css::uno::Any aFontNameComplex = xTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[CTL_SCRIPT]);
-        addFontFeatures(xMutableDataModel, rootNode, CTL_SCRIPT, aFontNameComplex.get< ::rtl::OUString>(), complexFontDesc);
         ::rtl::OUString asianFontDesc = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(" (Asian)"));
 
-        css::uno::Any aFontNameAsian = xTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[ASIAN_SCRIPT]);
-        addFontFeatures(xMutableDataModel, rootNode, ASIAN_SCRIPT, aFontNameAsian.get< ::rtl::OUString>(), asianFontDesc);
+        css::uno::Reference< css::beans::XPropertySetInfo >
+            xTextPropSetInfo(m_xTextProperties->getPropertySetInfo());
 
-        printPropertyNames(xTextProperties);
+        if (xTextPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[WESTERN_SCRIPT]))
+        {
+            aFontName = m_xTextProperties.get()->
+                getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);
+            ouWestern = aFontName.get< ::rtl::OUString>();
+            addFontFeatures(xMutableDataModel, rootNode, WESTERN_SCRIPT, ouWestern, ::rtl::OUString());
+        }
+        if (xTextPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[CTL_SCRIPT]))
+        {
+            aFontNameComplex = m_xTextProperties.get()->
+                getPropertyValue(FONT_PROPERTY_NAME[CTL_SCRIPT]);
+            ouCtl = aFontNameComplex.get< ::rtl::OUString>();
+            addFontFeatures(xMutableDataModel, rootNode, CTL_SCRIPT, ouCtl, complexFontDesc);
+        }
+        if (xTextPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[ASIAN_SCRIPT]))
+        {
+            aFontNameAsian = m_xTextProperties.get()->
+                getPropertyValue(FONT_PROPERTY_NAME[ASIAN_SCRIPT]);
+            ouAsian =  aFontNameAsian.get< ::rtl::OUString>();
+            addFontFeatures(xMutableDataModel, rootNode, ASIAN_SCRIPT, ouAsian, asianFontDesc);
+        }
+        //printPropertyNames(m_xTextProperties);
 #ifdef GROOO_DEBUG
         logMsg("Check style fonts\n");
 #endif
+        css::uno::Any charStyle;
         static const ::rtl::OUString charStyleName = ::rtl::OUString::createFromAscii("CharStyleName");
         static const ::rtl::OUString paraStyleName = ::rtl::OUString::createFromAscii("ParaStyleName");
-        if (xCharStylesContainer.is() && xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(charStyleName) &&
-            xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(paraStyleName) )
+        static const ::rtl::OUString cellStyleName = ::rtl::OUString::createFromAscii("CellStyle");
+        static const ::rtl::OUString graphicsStyle =
+            ::rtl::OUString::createFromAscii("Style");
+        if (xCharStylesContainer.is() && m_xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(charStyleName) &&
+            m_xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(paraStyleName) )
         {
-            css::uno::Any aCharStyle = xTextProperties.get()->getPropertyValue(charStyleName);
-            css::uno::Any aParaStyle =  xTextProperties.get()->getPropertyValue(paraStyleName);
+            css::uno::Any aCharStyle = m_xTextProperties.get()->getPropertyValue(charStyleName);
+            css::uno::Any aParaStyle =  m_xTextProperties.get()->getPropertyValue(paraStyleName);
             ::rtl::OUString styleName = aCharStyle.get< ::rtl::OUString>();
-            css::uno::Any charStyle;
             if (xCharStylesContainer.get()->hasByName(styleName))
             {
                 charStyle = xCharStylesContainer.get()->getByName(styleName);
@@ -398,35 +487,65 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(css::uno::Ref
                 styleName = aParaStyle.get< ::rtl::OUString>();
                 charStyle = xParaStylesContainer.get()->getByName(styleName);
             }
-            if (charStyle.has<css::uno::Reference<  css::uno::XInterface > >())
+        }
+        else if (xCellStylesContainer.is() && m_xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(cellStyleName))
+        {
+            css::uno::Any aCellStyleName = m_xTextProperties.get()->getPropertyValue(cellStyleName);
+            ::rtl::OUString styleName = aCellStyleName.get< ::rtl::OUString>();
+            if (xCellStylesContainer.get()->hasByName(styleName))
             {
-                css::uno::Reference< css::beans::XPropertySet> xStyleTextProperties(
-                    charStyle.get<css::uno::Reference< css::uno::XInterface> >(), css::uno::UNO_QUERY);
-                assert(xStyleTextProperties.is());
-                printPropertyNames(xStyleTextProperties);
-                css::uno::Any aStyleFontName = xStyleTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);
-                css::uno::Any aStyleFontNameComplex = xStyleTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[CTL_SCRIPT]);
-                css::uno::Any aStyleFontNameAsian = xStyleTextProperties.get()->getPropertyValue(FONT_PROPERTY_NAME[ASIAN_SCRIPT]);
-                if (aStyleFontName.get< ::rtl::OUString >().compareTo(aFontName.get< ::rtl::OUString>()) != 0 ||
-                    aStyleFontNameComplex.get< ::rtl::OUString >().compareTo(aFontNameComplex.get< ::rtl::OUString>()) != 0 ||
-                    aStyleFontNameAsian.get< ::rtl::OUString >().compareTo(aFontNameAsian.get< ::rtl::OUString>()) != 0)
-                {
-                    // fonts don't match the style, so don't offer sync option
-                    xCheckBoxWindow.get()->setVisible(sal_False);
-                }
-                else
-                {
-                    m_xStyleTextProperties.set(xStyleTextProperties);
-                }
+                charStyle = xCellStylesContainer.get()->getByName(styleName);
+            }
+        }
+        else if (xGraphicStylesContainer.is() &&
+            m_xTextProperties.get()->getPropertySetInfo()->hasPropertyByName(graphicsStyle))
+        {
+            // the shape's style property contains the Style itself, not the name
+            charStyle = m_xTextProperties->getPropertyValue(graphicsStyle);
+        }
+
+        if (charStyle.hasValue() &&
+            charStyle.has<css::uno::Reference<  css::uno::XInterface > >())
+        {
+            css::uno::Reference< css::beans::XPropertySet> xStyleTextProperties(
+                charStyle.get<css::uno::Reference< css::uno::XInterface> >(), css::uno::UNO_QUERY);
+            assert(xStyleTextProperties.is());
+            //printPropertyNames(xStyleTextProperties);
+            css::uno::Any aStyleFontName;
+            css::uno::Any aStyleFontNameComplex;
+            css::uno::Any aStyleFontNameAsian;
+            ::rtl::OUString ouWesternStyle;
+            ::rtl::OUString ouCtlStyle;
+            ::rtl::OUString ouAsianStyle;
+            css::uno::Reference< css::beans::XPropertySetInfo> xPropSetInfo(xStyleTextProperties->getPropertySetInfo());
+            if (xPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[WESTERN_SCRIPT]))
+            {
+                aStyleFontName = xStyleTextProperties.get()->
+                    getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);
+                ouWesternStyle = aStyleFontName.get< ::rtl::OUString >();
+            }
+            if (xPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[CTL_SCRIPT]))
+            {
+                aStyleFontNameComplex = xStyleTextProperties.get()->
+                    getPropertyValue(FONT_PROPERTY_NAME[CTL_SCRIPT]);
+                ouCtlStyle = aStyleFontNameComplex.get< ::rtl::OUString >();
+            }
+            if (xPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[ASIAN_SCRIPT]))
+            {
+                aStyleFontNameAsian = xStyleTextProperties.get()->
+                    getPropertyValue(FONT_PROPERTY_NAME[ASIAN_SCRIPT]);
+                ouAsianStyle = aStyleFontNameAsian.get< ::rtl::OUString >();
+            }
+            if (ouWestern.compareTo(ouWesternStyle) != 0 ||
+                ouCtl.compareTo(ouCtlStyle) != 0 ||
+                ouAsian.compareTo(ouAsianStyle) != 0)
+            {
+                // fonts don't match the style, so don't offer sync option
+                xCheckBoxWindow.get()->setVisible(sal_False);
             }
             else
             {
-#ifdef GROOO_DEBUG
-                ::rtl::OString asciiStyleName(128u);
-                styleName.convertToString(&asciiStyleName, RTL_TEXTENCODING_UTF8, asciiStyleName.getLength());
-                logMsg("CharStyleName not found %s\n", asciiStyleName.getStr());
-#endif
-                xCheckBoxWindow.get()->setVisible(sal_False);
+                m_xStyleTextProperties.set(xStyleTextProperties);
             }
         }
         else
@@ -449,9 +568,9 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowOpened(const 
         m_xTree.set(xControl, css::uno::UNO_QUERY);
         css::uno::Reference< css::awt::XControl > xCheckBoxControl = xControlContainer.get()->getControl(UPDATE_STYLE_CHECKBOX);
         m_xUpdateStyle.set(xCheckBoxControl, css::uno::UNO_QUERY);
-        css::uno::Reference< css::view::XSelectionSupplier > xSelectionSupplier(xControl, css::uno::UNO_QUERY);
-        if (xSelectionSupplier.is())
-            xSelectionSupplier.get()->addSelectionChangeListener(this);
+        m_xSelectionSupplier.set(xControl, css::uno::UNO_QUERY);
+        if (m_xSelectionSupplier.is())
+            m_xSelectionSupplier.get()->addSelectionChangeListener(this);
         css::uno::Reference<css::awt::XControlModel> xControlModel(xControl.get()->getModel());
         css::uno::Reference< css::beans::XPropertySet> xModelProperties(xControlModel, css::uno::UNO_QUERY);
         //css::uno::Reference<css::awt::tree::XTreeDataModel> xDataModel;
@@ -482,7 +601,6 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowOpened(const 
 #ifdef GROOO_DEBUG
         rtl::OString msg;
         e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
-        
         logMsg("Exception %s\n", msg.getStr());
 #endif
     }
@@ -584,27 +702,31 @@ org::sil::graphite::FeatureDialogEventHandler::selectionChanged( const ::com::su
 
 void org::sil::graphite::FeatureDialogEventHandler::setFontNames(void)
 {
-    css::uno::Reference<css::text::XTextViewCursorSupplier> xTextCursorSupplier;
-    css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
-    xTextCursorSupplier.set(m_xController, css::uno::UNO_QUERY);
-    if (xTextCursorSupplier.is())
-        xTextCursor.set(xTextCursorSupplier->getViewCursor());
-    if (xTextCursor.is())
+    css::uno::Reference<css::view::XSelectionSupplier> xDocSelectionSupplier(m_xController, css::uno::UNO_QUERY);
+    m_xTextProperties.set(getTextPropertiesFromModel(m_xModel, xDocSelectionSupplier));
+
+    if (m_xTextProperties.is())
     {
-        css::uno::Reference< css::beans::XPropertySet> xTextProperties(xTextCursor, css::uno::UNO_QUERY);
         for (int i = 0; i < NUM_SCRIPTS; i++)
         {
             if (m_fontNamesWithFeatures[i].getLength() > 0)
             {
-                xTextProperties.get()->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
+                m_xTextProperties->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
                 // set it on the style as well if requested
                 if (m_xStyleTextProperties.is() && m_xUpdateStyle.get()->getState())
                     m_xStyleTextProperties.get()->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
 #ifdef GROOO_DEBUG
                 ::rtl::OString msg;
+                ::rtl::OString setName;
                 m_fontNamesWithFeatures[i].convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
-                logMsg("set font %d to %s updated style %d\n", i, msg.getStr(),
-                        m_xUpdateStyle.get()->getState());
+                css::uno::Any aSetName =
+                    m_xTextProperties->getPropertyValue(FONT_PROPERTY_NAME[i]);
+                aSetName.get< ::rtl::OUString >().convertToString(&setName, RTL_TEXTENCODING_UTF8, 128);
+                css::beans::Property prop = m_xTextProperties->getPropertySetInfo()->
+                    getPropertyByName(FONT_PROPERTY_NAME[i]);
+                logMsg("set font %d to %s requested %s updated style %d property has type %x\n",
+                       i, setName.getStr(), msg.getStr(),
+                       m_xUpdateStyle.get()->getState(), prop.Attributes);
 #endif
             }
         }
