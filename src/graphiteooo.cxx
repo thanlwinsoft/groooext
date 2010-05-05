@@ -27,6 +27,9 @@
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
 #include "cppuhelper/implementationentry.hxx"
+#include "com/sun/star/deployment/XPackageInformationProvider.hpp"
+#include "com/sun/star/deployment/PackageInformationProvider.hpp"
+#include "com/sun/star/resource/StringResourceWithLocation.hpp"
 #include "com/sun/star/text/XTextViewCursor.hpp"
 #include "com/sun/star/text/XTextViewCursorSupplier.hpp"
 #include "com/sun/star/sheet/XCellRangeReferrer.hpp"
@@ -228,6 +231,27 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 		}
 	}
 	return xTextProperties;
+}
+
+css::uno::Reference< css::resource::XStringResourceWithLocation>
+osg::getResource(
+        css::uno::Reference< css::uno::XComponentContext > const & context,
+                    ::rtl::OUString basename)
+{
+    css::uno::Reference< css::deployment::XPackageInformationProvider >
+                    xInfoProvider( css::deployment::PackageInformationProvider::get( context) );
+    rtl::OUString sLocation = xInfoProvider->getPackageLocation(
+        rtl::OUString::createFromAscii( "org.sil.graphite.GraphiteOptions" ) );
+    rtl::OString aLocation;
+    sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, 128);
+    rtl::OUString dialogDir = rtl::OUString::createFromAscii("/dialogs/");
+    rtl::OUString resUrl = sLocation + dialogDir;
+    ::com::sun::star::lang::Locale locale;
+    // null handler
+    ::css::uno::Reference<css::task::XInteractionHandler> xInteractionHandler;
+    return css::resource::StringResourceWithLocation::create(context,
+        resUrl, sal_True, locale, basename, rtl::OUString(),
+        xInteractionHandler);
 }
 
 // Define the supported services

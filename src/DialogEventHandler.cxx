@@ -96,6 +96,7 @@ private:
 
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     GraphiteConfiguration m_config;
+    css::uno::Reference< css::resource::XStringResourceWithLocation> m_resource;
 };
 
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_EVENT(RTL_CONSTASCII_USTRINGPARAM("enableGraphiteChanged"));
@@ -107,10 +108,12 @@ const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_FONT_LIST
 
 
 org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context) :
-    m_xContext(context), m_config(context)
+    m_xContext(context), m_config(context), 
+    m_resource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteOptions")))
 {
 #ifdef GROOO_DEBUG
-    logMsg("DialogEventHandler constructor\n");
+    logMsg("DialogEventHandler constructor with resource %d\n",
+           m_resource.is());
 #endif
 }
 

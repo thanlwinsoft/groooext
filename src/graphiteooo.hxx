@@ -26,8 +26,10 @@
 #ifndef graphiteooo_hxx
 #define graphiteooo_hxx
 
+#include "com/sun/star/resource/XStringResourceWithLocation.hpp"
 #include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XInterface.hpp"
+#include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/frame/XModel.hpp"
 #include "com/sun/star/view/XSelectionSupplier.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
@@ -38,6 +40,10 @@ namespace org { namespace sil { namespace graphite {
 	void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
 
     void printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> interface);
+
+    ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceWithLocation> getResource(
+        ::com::sun::star::uno::Reference< ::com::sun::star::uno::XComponentContext > const & context,
+                    ::rtl::OUString basename);
 
 	::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet> getTextPropertiesFromModel(
 		::com::sun::star::uno::Reference< ::com::sun::star::frame::XModel > xModel,
