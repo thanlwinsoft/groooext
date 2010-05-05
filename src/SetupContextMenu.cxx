@@ -32,12 +32,17 @@
 #include "rtl/string.hxx"
 #include "rtl/ustring.hxx"
 #include "com/sun/star/lang/XComponent.hpp"
+#include "com/sun/star/lang/XServiceInfo.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
-#include "cppuhelper/implbase3.hxx"
+#include "cppuhelper/implbase5.hxx"
 #include "com/sun/star/beans/XProperty.hpp"
 #include "com/sun/star/beans/NamedValue.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/embed/XEmbeddedObject.hpp"
+#include "com/sun/star/document/XDocumentEventBroadcaster.hpp"
+#include "com/sun/star/document/XEventBroadcaster.hpp"
+#include "com/sun/star/document/XEventListener.hpp"
+#include "com/sun/star/document/XDocumentEventListener.hpp"
 #include "com/sun/star/document/XEmbeddedObjectSupplier.hpp"
 #include "com/sun/star/document/XEmbeddedObjectSupplier2.hpp"
 #include "com/sun/star/drawing/XShapes.hpp"
@@ -65,6 +70,7 @@
 #include "com/sun/star/ui/XContextMenuInterception.hpp"
 #include "com/sun/star/ui/XContextMenuInterceptor.hpp"
 #include "com/sun/star/view/XSelectionSupplier.hpp"
+#include "com/sun/star/view/XSelectionChangeListener.hpp"
 
 #include "groooDebug.hxx"
 #include "graphiteooo.hxx"
@@ -77,8 +83,10 @@ namespace css = ::com::sun::star;
 namespace org { namespace sil { namespace graphite { class SetupContextMenu; }}}
 
 class org::sil::graphite::SetupContextMenu:
-    public ::cppu::WeakImplHelper3<
-	css::task::XJob, css::ui::XContextMenuInterceptor, css::frame::XFrameActionListener>
+    public ::cppu::WeakImplHelper5<
+    css::task::XJob, css::ui::XContextMenuInterceptor,
+    css::view::XSelectionChangeListener, css::document::XDocumentEventListener,
+    css::document::XEventListener>
 {
 public:
     explicit SetupContextMenu(css::uno::Reference< css::uno::XComponentContext > const & context);
@@ -92,7 +100,13 @@ public:
 // ::com::sun::star::lang::XEventListener:
 	virtual void SAL_CALL disposing(const css::lang::EventObject & Source) throw (css::uno::RuntimeException) {}
 // ::com::sun::star::frame::XFrameActionListener
-	virtual void SAL_CALL frameAction( const ::com::sun::star::frame::FrameActionEvent& Action ) throw (::com::sun::star::uno::RuntimeException);
+//	virtual void SAL_CALL frameAction( const ::com::sun::star::frame::FrameActionEvent& Action ) throw (::com::sun::star::uno::RuntimeException);
+    // ::com::sun::star::view::XSelectionChangeListener
+    virtual void SAL_CALL selectionChanged( const ::com::sun::star::lang::EventObject& aEvent ) throw (::com::sun::star::uno::RuntimeException);
+    // ::com::sun::star::document::XDocumentEventListener
+    virtual void SAL_CALL documentEventOccured( const ::com::sun::star::document::DocumentEvent& Event ) throw (::com::sun::star::uno::RuntimeException);
+
+    virtual void SAL_CALL notifyEvent( const ::com::sun::star::document::EventObject& Event ) throw (::com::sun::star::uno::RuntimeException);
 
 private:
     SetupContextMenu(const org::sil::graphite::SetupContextMenu &); // not defined
@@ -274,7 +288,7 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
     // NOTE: Default initialized polymorphic structs can cause problems because of
     // missing default initialization of primitive types of some C++ compilers or
     // different Any initialization in Java and C++ polymorphic structs.
-    return ::com::sun::star::uno::Any();
+    return ::com::sun::star::uno::Any(jobReturn);
 }
 
 
@@ -291,6 +305,30 @@ void org::sil::graphite::SetupContextMenu::addMenuInterceptionToModel(css::uno::
 #endif
             interception.get()->registerContextMenuInterceptor(this);
         }
+        css::uno::Reference<css::view::XSelectionSupplier>
+            xSelectionSupplier(m_xController, css::uno::UNO_QUERY);
+        if (xSelectionSupplier.is())
+        {
+            css::uno::Reference<css::view::XSelectionChangeListener> xListener(this);
+            xSelectionSupplier->addSelectionChangeListener(xListener);
+            logMsg("Added Selection listener\n");
+        }
+        css::uno::Reference<css::document::XDocumentEventBroadcaster>
+            xDocEventBroadcaster(xModel, css::uno::UNO_QUERY);
+        if (xDocEventBroadcaster.is())
+        {
+            css::uno::Reference<css::document::XDocumentEventListener> xDocEventListener(this);
+            xDocEventBroadcaster->addDocumentEventListener(xDocEventListener);
+            logMsg("Added DocumentEvent listener\n");
+        }
+        css::uno::Reference<css::document::XEventBroadcaster>
+            xEventBroadcaster(xModel, css::uno::UNO_QUERY);
+        if (xEventBroadcaster.is())
+        {
+            css::uno::Reference<css::document::XEventListener> xEventListener(this);
+            xEventBroadcaster->addEventListener(xEventListener);
+            logMsg("Added Event listener to Document\n");
+        }
 		css::uno::Reference<css::sheet::XSpreadsheetDocument> xSpreadsheetDoc;
 		xSpreadsheetDoc.set(xModel, css::uno::UNO_QUERY);
 		if (xSpreadsheetDoc.is())
@@ -301,7 +339,7 @@ void org::sil::graphite::SetupContextMenu::addMenuInterceptionToModel(css::uno::
 			for (int i = 0; i < sheetNames.getLength(); i++)
 			{
 				css::uno::Any aSheet = xSheets->getByName(sheetNames[i]);
-				css::uno::Reference<css::sheet::XSpreadsheet> xSheet = 
+				css::uno::Reference<css::sheet::XSpreadsheet> xSheet =
 					aSheet.get<css::uno::Reference<css::sheet::XSpreadsheet> >();
 				if (!xSheet.is())
 					logMsg("Failed to get Xspreadsheet\n");
@@ -331,6 +369,14 @@ void org::sil::graphite::SetupContextMenu::addMenuInterceptionToModel(css::uno::
 								xChartSupplier->getEmbeddedObject();
 							if (!xChartComponent.is())
 								continue;
+                            printServiceNames(xChartComponent);
+                            xEventBroadcaster.set(xChartComponent, css::uno::UNO_QUERY);
+                            if (xEventBroadcaster.is())
+                            {
+                                css::uno::Reference<css::document::XEventListener> xEventListener(this);
+                                xEventBroadcaster->addEventListener(xEventListener);
+                                logMsg("Added Event listener to Chart Document\n");
+                            }
 							css::uno::Reference <SetupContextMenu> setupContextMenu(this);
 							css::uno::Reference <css::lang::XEventListener> listener(setupContextMenu, css::uno::UNO_QUERY);
 							xChartComponent->addEventListener(listener);
@@ -437,12 +483,95 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
     return css::ui::ContextMenuInterceptorAction_IGNORED;
 }
 
+void SAL_CALL 
+org::sil::graphite::SetupContextMenu::selectionChanged( const ::com::sun::star::lang::EventObject& aEvent ) throw (::com::sun::star::uno::RuntimeException)
+{
+    css::uno::Reference<css::view::XSelectionSupplier>
+        xSupplier(aEvent.Source, css::uno::UNO_QUERY);
+    ::rtl::OString aTypeName;
+    if (xSupplier.is())
+    {
+        css::uno::Any aSelection = xSupplier->getSelection();
 
+        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, 128);
+        logMsg("selectionChanged %s\n", aTypeName.getStr());
+        if (aSelection.has<css::uno::Reference<css::uno::XInterface> >())
+        {
+            css::uno::Reference<css::uno::XInterface>
+                xSelectionInterface(aSelection.get<css::uno::Reference<css::uno::XInterface> >());
+            css::uno::Reference<css::drawing::XShapes> xShapes(xSelectionInterface, css::uno::UNO_QUERY);
+            printServiceNames(xSelectionInterface);
+            if (xShapes.is())
+            {
+                logMsg("have %d shapes\n", xShapes->getCount());
+                if (xShapes->getCount() > 0)
+                {
+                    css::uno::Reference<css::drawing::XShape> xShape;
+                    css::uno::Reference<css::beans::XPropertySet> xChartProps;
+                    xChartProps.set(xShapes->getByIndex(0), css::uno::UNO_QUERY);
+                    xShape.set(xShapes->getByIndex(0), css::uno::UNO_QUERY);
+                    ::rtl::OUString modelProp = ::rtl::OUString::createFromAscii("Model");
+                    if (xShape.is() && xChartProps.is() && 
+                        xChartProps->getPropertySetInfo()->hasPropertyByName(modelProp))
+                    {
+                        css::uno::Any aModel = xChartProps->getPropertyValue(modelProp);
+                        if (aModel.has<css::uno::Reference<css::frame::XModel> >())
+                        {
+                            css::uno::Reference<css::frame::XModel> xChartModel =
+                                aModel.get<css::uno::Reference<css::frame::XModel> >();
+                            css::uno::Reference<css::frame::XController> xChartController(xChartModel->getCurrentController(), css::uno::UNO_QUERY);
+
+                            css::uno::Reference<css::document::XDocumentEventBroadcaster>
+                                xDocEventBroadcaster(xChartModel, css::uno::UNO_QUERY);
+                            if (xDocEventBroadcaster.is())
+                            {
+                                css::uno::Reference<css::document::XDocumentEventListener> xDocEventListener(this);
+                                xDocEventBroadcaster->
+                                    addDocumentEventListener(xDocEventListener);
+                                logMsg("Added DocumentEvent listener to Chart\n");
+                            }
+                            css::uno::Reference<css::document::XEventBroadcaster>
+                                xEventBroadcaster(xChartModel, css::uno::UNO_QUERY);
+                            if (xEventBroadcaster.is())
+                            {
+                                css::uno::Reference<css::document::XEventListener> xEventListener(this);
+                                xEventBroadcaster->addEventListener(xEventListener);
+                                logMsg("Added Event listener to ChartDocument\n");
+                            }
+
+                            logMsg("have chart with controller %d\n",
+                                    xChartController.is());
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SAL_CALL
+org::sil::graphite::SetupContextMenu::documentEventOccured( const ::com::sun::star::document::DocumentEvent& event ) throw (::com::sun::star::uno::RuntimeException)
+{
+    ::rtl::OString aEventName;
+    event.EventName.convertToString(&aEventName, RTL_TEXTENCODING_UTF8, 128);
+    logMsg("docevent: %s\n", aEventName.getStr());
+}
+
+void SAL_CALL
+org::sil::graphite::SetupContextMenu::notifyEvent( const ::com::sun::star::document::EventObject& event ) throw (::com::sun::star::uno::RuntimeException)
+{
+    ::rtl::OString aEventName;
+    event.EventName.convertToString(&aEventName, RTL_TEXTENCODING_UTF8, 128);
+    logMsg("notify event: %s\n", aEventName.getStr());
+}
+
+/*
 void SAL_CALL
 org::sil::graphite::SetupContextMenu::frameAction( const ::com::sun::star::frame::FrameActionEvent& action ) throw (::com::sun::star::uno::RuntimeException)
 {
 	logMsg("frameAction %d\n", action.Action);
 }
+*/
 
 // component helper namespace
 namespace org { namespace sil { namespace graphite { namespace setupcontextmenu {

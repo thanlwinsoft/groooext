@@ -34,10 +34,13 @@
 #include "com/sun/star/table/XCellRange.hpp"
 #include "com/sun/star/table/XCellCursor.hpp"
 #include "com/sun/star/lang/XComponent.hpp"
+#include "com/sun/star/lang/XServiceInfo.hpp"
 #include "com/sun/star/drawing/XShapes.hpp"
 #include "com/sun/star/drawing/XShape.hpp"
 #include "com/sun/star/frame/XFrame.hpp"
 #include "com/sun/star/frame/XModel.hpp"
+#include "com/sun/star/uno/XInterface.hpp"
+#include "com/sun/star/uno/Any.hxx"
 
 #ifdef WIN32
 #include <windows.h>
@@ -93,6 +96,21 @@ void osg::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > prop
     }
 }
 
+void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> interface)
+{
+    css::uno::Reference<css::lang::XServiceInfo> xServiceInfo(interface, css::uno::UNO_QUERY);
+    if (xServiceInfo.is())
+    {
+        ::rtl::OString aServiceName;
+        css::uno::Sequence< ::rtl::OUString> serviceNames =
+            xServiceInfo->getSupportedServiceNames();
+        for (int i = 0; i < serviceNames.getLength(); i++)
+        {
+            serviceNames[i].convertToString(&aServiceName, RTL_TEXTENCODING_UTF8, 128);
+            osg::logMsg("service: %s\n", aServiceName.getStr());
+        }
+    }
+}
 
 css::uno::Reference< css::beans::XPropertySet> 
 osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel,
