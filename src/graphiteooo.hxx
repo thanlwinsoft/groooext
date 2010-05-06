@@ -30,6 +30,7 @@
 #include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
+#include "com/sun/star/chart2/XChartDocument.hpp"
 #include "com/sun/star/frame/XModel.hpp"
 #include "com/sun/star/view/XSelectionSupplier.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
@@ -52,6 +53,9 @@ namespace org { namespace sil { namespace graphite {
 		::com::sun::star::uno::Reference< ::com::sun::star::frame::XModel > xModel,
 		::com::sun::star::uno::Reference< ::com::sun::star::view::XSelectionSupplier> xSelection);
 
+    ::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet> getChartComponentProperties(
+        ::com::sun::star::uno::Reference < ::com::sun::star::chart2::XChartDocument> & xChartDocument,
+        ::rtl::OUString selectionId);
 }}}
 
 #endif

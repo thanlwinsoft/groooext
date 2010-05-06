@@ -23,10 +23,22 @@
  *
  ************************************************************************/
 
+#include <cstring>
+
 #include "sal/config.h"
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
 #include "cppuhelper/implementationentry.hxx"
+#include "com/sun/star/chart/XChartDocument.hpp"
+#include "com/sun/star/chart2/XAxis.hpp"
+#include "com/sun/star/chart2/XDiagram.hpp"
+#include "com/sun/star/chart2/XInternalDataProvider.hpp"
+#include "com/sun/star/chart2/XChartDocument.hpp"
+#include "com/sun/star/chart2/XFormattedString.hpp"
+#include "com/sun/star/chart2/XCoordinateSystem.hpp"
+#include "com/sun/star/chart2/XCoordinateSystemContainer.hpp"
+#include "com/sun/star/chart2/XTitle.hpp"
+#include "com/sun/star/chart2/XTitled.hpp"
 #include "com/sun/star/deployment/XPackageInformationProvider.hpp"
 #include "com/sun/star/deployment/PackageInformationProvider.hpp"
 #include "com/sun/star/resource/StringResourceWithLocation.hpp"
@@ -115,6 +127,90 @@ void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::
     }
 }
 
+css::uno::Reference< css::beans::XPropertySet> osg::getChartComponentProperties(
+    css::uno::Reference <css::chart2::XChartDocument> & xChart2Document,
+    ::rtl::OUString selectionId)
+{
+    //CID/Title=
+    //subtitle CID/D=0:Title=
+    //2nd yaxis title CID/D=0:CS=0:Axis=1,1:Title=
+    //1st xaxis title CID/D=0:CS=0:Axis=0,0:Title=
+    //legend CID/D=0:Legend=
+    css::uno::Reference< css::drawing::XShape> xShape;
+    css::uno::Reference< css::beans::XPropertySet> xTextProperties;
+
+    css::uno::Reference <css::chart::XChartDocument> xChartDocument(xChart2Document, css::uno::UNO_QUERY);
+    css::uno::Reference <css::chart2::XDiagram> xDiagram2(xChart2Document->getFirstDiagram(), css::uno::UNO_QUERY);
+    css::uno::Reference< css::chart2::XCoordinateSystemContainer> xCoordContainer(xDiagram2, css::uno::UNO_QUERY);
+
+    const char * coordPrefix = "CID/D=0:CS=";
+    const char * axisPrefix = "Axis=";
+    const char * titlePrefix = "Title=";
+
+    printServiceNames(xDiagram2);
+
+    if (selectionId.equalsAscii("CID/Title="))
+    {
+        xShape = xChartDocument->getTitle();
+    }
+    else if (selectionId.equalsAscii("CID/D=0:Title="))
+    {
+        xShape = xChartDocument->getSubTitle();
+    }
+    else if (selectionId.equalsAscii("CID/D=0:Legend="))
+    {
+        xShape = xChartDocument->getLegend();
+    }
+    else if (xDiagram2.is() && xCoordContainer.is() &&
+        selectionId.indexOfAsciiL(coordPrefix, strlen(coordPrefix)) == 0)
+    {
+        ::rtl::OUString coordIdString(selectionId.getStr() + strlen(coordPrefix), 1);
+        int coordId = coordIdString.toInt32();
+        int axisCharIndex = selectionId.indexOfAsciiL(axisPrefix, strlen(axisPrefix));
+        ::rtl::OUString axisPrimaryString(selectionId.getStr() + axisCharIndex + strlen(axisPrefix), 1);
+        ::rtl::OUString axisSecondaryString(selectionId.getStr() + axisCharIndex + strlen(axisPrefix) + 2, 1);
+        int axisDimension = axisPrimaryString.toInt32();
+        int axisIndex = axisSecondaryString.toInt32();
+        css::uno::Sequence<css::uno::Reference< css::chart2::XCoordinateSystem> >  coordSystems = xCoordContainer->getCoordinateSystems();
+
+#ifdef GROOO_DEBUG
+        logMsg("editing coordsystem %d/%d axis %d/%d,%d/%d\n", coordId,
+               coordSystems.getLength(), axisDimension,
+               coordSystems[coordId]->getDimension(), axisIndex,
+               coordSystems[coordId]->getMaximumAxisIndexByDimension(axisDimension));
+#endif
+        if (coordId < coordSystems.getLength() &&
+            axisDimension < coordSystems[coordId]->getDimension() &&
+            axisIndex <= coordSystems[coordId]->getMaximumAxisIndexByDimension(axisDimension))
+        {
+            css::uno::Reference<css::chart2::XAxis>xAxis =
+                coordSystems[coordId]->getAxisByDimension(axisDimension, axisIndex);
+            logMsg("have axis %d\n", xAxis.is());
+            if (selectionId.indexOfAsciiL(titlePrefix, strlen(titlePrefix)) > -1)
+            {
+                css::uno::Reference<css::chart2::XTitled>xTitled(xAxis, css::uno::UNO_QUERY);
+                if (xTitled.is())
+                {
+                    css::uno::Sequence<css::uno::Reference<css::chart2::XFormattedString> >
+                        formattedStrings = xTitled->getTitleObject()->getText();
+                    if (formattedStrings.getLength() > 0)
+                    {
+                        xTextProperties.set(formattedStrings[0], css::uno::UNO_QUERY);
+                    }
+                }
+            }
+            else
+            {
+                xTextProperties.set(xAxis, css::uno::UNO_QUERY);
+            }
+        }
+    }
+
+    if (xShape.is())
+        xTextProperties.set(xShape, css::uno::UNO_QUERY);
+    return xTextProperties;
+}
+
 css::uno::Reference< css::beans::XPropertySet> 
 osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel,
 								css::uno::Reference<css::view::XSelectionSupplier> xSelection)
@@ -124,6 +220,8 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
     css::uno::Reference<css::text::XTextViewCursor> xTextCursor;
     css::uno::Reference<css::sheet::XSheetCellRange> xSheetCellRange;
 	css::uno::Reference<css::sheet::XCellRangeReferrer> xCellRangeReferrer;
+    
+    css::uno::Reference<css::chart2::XInternalDataProvider> xChartDataProvider;
 	css::uno::Reference<css::frame::XController> xController(xModel->getCurrentController(), css::uno::UNO_QUERY);
     if (xController.is())
     {
@@ -135,6 +233,7 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
         
 		// for Calc
 		xCellRangeReferrer.set(xController, css::uno::UNO_QUERY);
+
     }
 	css::uno::Any aSelection;
 	if (xSelection.is())
@@ -152,6 +251,8 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 					aSelection.get<css::uno::Reference<css::uno::XInterface> >();
 			css::uno::Reference<css::drawing::XShapes> xShapes;
 			xShapes.set(xInterface, css::uno::UNO_QUERY);
+            css::uno::Reference<css::container::XIndexAccess >
+                xContainer(xInterface, css::uno::UNO_QUERY);
 			// for the moment only support setting text when only one shape is selected
 			if (xShapes.is() && (xShapes.get()->getCount() == 1) )
 			{
@@ -175,39 +276,38 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
                     logMsg("Have cell cursor from selection %d\n", xTextProperties.is());
 #endif
                 }
-			}
-		}
-		if (!xTextProperties.is())
-		{
-			if (xTextCursorSupplier.is())
-			{
-				xTextCursor.set(xTextCursorSupplier->getViewCursor());
-				if (xTextCursor.is())
-				{
-					xTextProperties.set(xTextCursor, css::uno::UNO_QUERY);
-#ifdef GROOO_DEBUG
-                    logMsg("Have text cursor %d\n", xTextProperties.is());
-#endif
-				}
-				else
+                if (xContainer.is() && (xContainer->getCount() == 1))
                 {
-#ifdef GROOO_DEBUG
-                    logMsg("Have text cursor supplier but no cursor\n");
-#endif
+                    css::uno::Reference<css::text::XTextRange> xTextRange(
+                        xContainer->getByIndex(0), css::uno::UNO_QUERY);
+                    if (xTextRange.is())
+                    {
+                        xTextProperties.set(xTextRange, css::uno::UNO_QUERY);
+                        logMsg("have text range from selection\n");
+                    }
                 }
 			}
-			else if (xCellRangeReferrer.is())
-			{
-				css::uno::Reference< css::table::XCellRange> xCellRange = xCellRangeReferrer.get()->getReferredCells();
-				if (xCellRange.is())
-				{
-					xTextProperties.set(xCellRange, css::uno::UNO_QUERY);
-	#ifdef GROOO_DEBUG
-					logMsg("Have cell range\n");
-	#endif
-				}
-			}
 		}
+		else if (aSelection.has< ::rtl::OUString>())
+        {
+            ::rtl::OUString uSelection(aSelection.get< ::rtl::OUString>());
+#ifdef GROOO_DEBUG
+            ::rtl::OString aSelectionText;
+            uSelection.convertToString(&aSelectionText, RTL_TEXTENCODING_UTF8, 128);
+            logMsg("Selection text: %s\n", aSelectionText.getStr());
+            printServiceNames(xController);
+            logMsg("chart model?\n");
+            printServiceNames(xModel);
+#endif
+            css::uno::Reference <css::chart2::XChartDocument> xChartDocument(xModel, css::uno::UNO_QUERY);
+            if (xChartDocument.is())
+            {
+#ifdef GROOO_DEBUG
+                logMsg("have chart doc\n");
+#endif
+                xTextProperties.set(getChartComponentProperties(xChartDocument, uSelection));
+            }
+        }
 	}
 
 	// diagnostic

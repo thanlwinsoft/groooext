@@ -107,7 +107,7 @@ const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_FONT_LIST
 
 
 org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context) :
-    m_xContext(context), m_config(context), 
+    m_xContext(context), m_config(context),
     m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
                css::uno::UNO_QUERY)
 {
