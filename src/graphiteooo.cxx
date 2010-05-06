@@ -254,6 +254,25 @@ osg::getResource(
         xInteractionHandler);
 }
 
+::rtl::OUString
+osg::getResourceString(css::uno::Reference<css::resource::XStringResourceResolver>  resource, const char * resourceId)
+{
+    ::rtl::OUString resourceIdString = ::rtl::OUString::createFromAscii(resourceId);
+    if (resource.is())
+    {
+        try
+        {
+            ::rtl::OUString msgString = resource->resolveString(resourceIdString);
+            return msgString;
+        }
+        catch (css::resource::MissingResourceException mre)
+        {
+            logMsg("Resource %s not found\n", resourceId);
+        }
+    }
+    return resourceIdString;
+}
+
 // Define the supported services
 static ::cppu::ImplementationEntry const entries[] = {
     { &org::sil::graphite::graphiteaddon::_create,

@@ -89,31 +89,31 @@ private:
     static const ::rtl::OUString EXTERNAL_EVENT;
     static const ::rtl::OUString ENABLE_GRAPHITE_CHECKBOX;
     static const ::rtl::OUString GRAPHITE_ENABLED_LABEL;
-    static const ::rtl::OUString GRAPHITE_DISABLED_LABEL;
     static const ::rtl::OUString GRAPHITE_FONT_LIST;
     // destructor is private and will be called indirectly by the release call
     virtual ~DialogEventHandler() {}
 
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     GraphiteConfiguration m_config;
-    css::uno::Reference< css::resource::XStringResourceWithLocation> m_resource;
+    css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
 };
 
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_EVENT(RTL_CONSTASCII_USTRINGPARAM("enableGraphiteChanged"));
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::EXTERNAL_EVENT(RTL_CONSTASCII_USTRINGPARAM("external_event"));
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::ENABLE_GRAPHITE_CHECKBOX(RTL_CONSTASCII_USTRINGPARAM("EnableGraphiteCheckBox"));
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_ENABLED_LABEL(RTL_CONSTASCII_USTRINGPARAM("GraphiteEnabledLabel"));
-const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_DISABLED_LABEL(RTL_CONSTASCII_USTRINGPARAM("GraphiteDisabledLabel"));
+
 const ::rtl::OUString org::sil::graphite::DialogEventHandler::GRAPHITE_FONT_LIST(RTL_CONSTASCII_USTRINGPARAM("GraphiteFontListBox"));
 
 
 org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context) :
     m_xContext(context), m_config(context), 
-    m_resource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteOptions")))
+    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
+               css::uno::UNO_QUERY)
 {
 #ifdef GROOO_DEBUG
     logMsg("DialogEventHandler constructor with resource %d\n",
-           m_resource.is());
+           m_xResource.is());
 #endif
 }
 
@@ -224,8 +224,10 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             }
 			if (updatedEnvVariable == false)
 			{
-                ::rtl::OUString title(RTL_CONSTASCII_USTRINGPARAM("Enable/Disable Graphite"));
-                ::rtl::OUString msg(RTL_CONSTASCII_USTRINGPARAM("Failed to set SAL_DISABLE_GRAPHITE environment variable."));
+                ::rtl::OUString title;
+                title = getResourceString(m_xResource, "GraphiteOptions.EnableDisableGraphite");
+                ::rtl::OUString msg;
+                msg = getResourceString(m_xResource, "GraphiteOptions.FailedToSetVariable");
 #ifdef GROOO_DEBUG
 				logMsg("Failed to set environment variable\n");
 #endif
@@ -250,12 +252,13 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
 #endif
             if (environmentGraphiteEnabled != xCheckBox.get()->getState())
             {
-                // TODO localization
-                ::rtl::OUString title(RTL_CONSTASCII_USTRINGPARAM("Enable/Disable Graphite"));
+                ::rtl::OUString title;
+                title = getResourceString(m_xResource, "GraphiteOptions.EnableDisableGraphite");
+                ::rtl::OUString msg;
 #ifdef SAL_UNX
-                ::rtl::OUString msg(RTL_CONSTASCII_USTRINGPARAM("The change will take affect after you have logged out and back in again."));
+                msg  = getResourceString(m_xResource, "GraphiteOptions.LogoutLogin");
 #else
-                ::rtl::OUString msg(RTL_CONSTASCII_USTRINGPARAM("The change will take affect the next time you restart OpenOffice."));
+                msg  = getResourceString(m_xResource, "GraphiteOptions.Restart");
 #endif
                 showMessage(xWindowPeer, title, msg);
             }
@@ -263,17 +266,15 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
         }
         else if (eventValue.equalsAscii("back") || eventValue.equalsAscii("initialize"))
         {
-            css::uno::Reference< css::awt::XWindow> enabledLabel(getLabel(xWindow, GRAPHITE_ENABLED_LABEL), css::uno::UNO_QUERY);
-            css::uno::Reference< css::awt::XWindow> disabledLabel(getLabel(xWindow, GRAPHITE_DISABLED_LABEL), css::uno::UNO_QUERY);
+            css::uno::Reference< css::awt::XFixedText> enabledLabel(getLabel(xWindow, GRAPHITE_ENABLED_LABEL));
             if (environmentGraphiteEnabled)
             {
-                enabledLabel.get()->setVisible(sal_True);
-                disabledLabel.get()->setVisible(sal_False);
+                // label is already correct
             }
             else
             {
-                enabledLabel.get()->setVisible(sal_False);
-                disabledLabel.get()->setVisible(sal_True);
+                ::rtl::OUString disabledLabel = getResourceString(m_xResource, "GraphiteOptions.CurrentlyDisabled");
+                enabledLabel->setText(disabledLabel);
             }
             css::uno::Any graphiteEnabled;
             if (graphitePropertySet.is()) 

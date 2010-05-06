@@ -165,6 +165,7 @@ target_link_libraries(test_graphitefontinfo optimized ${GR_RELEASE_LIBRARY})
 
 set(ZIP_FILES dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions_en_US.properties dialogs/GraphiteOptions.xdl
     dialogs/GraphiteFeatures_en_US.default dialogs/GraphiteFeatures_en_US.properties dialogs/GraphiteFeatures.xdl
+    dialogs/GraphiteMessages_en_US.properties
     registry/schema/org/sil/graphite/GraphiteOptions.xcs registry/data/org/openoffice/Office/Addons.xcu
     registry/data/org/openoffice/Office/Jobs.xcu
     registry/data/org/openoffice/Office/OptionsDialog.xcu registry/data/org/openoffice/Office/ProtocolHandler.xcu
@@ -201,6 +202,8 @@ add_custom_target(copy_files
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteFeatures_en_US.properties
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteFeatures_en_US.default
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteFeatures_en_US.default
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteMessages_en_US.properties
+        ${PROJECT_BINARY_DIR}/dialogs/GraphiteMessages_en_US.properties
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Addons.xcu
         ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Addons.xcu

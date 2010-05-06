@@ -79,7 +79,10 @@ const ::rtl::OUString osg::FeatureDialogEventHandler::DISABLED_ICON = ::rtl::OUS
 org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context, 
                                                                               css::uno::Reference< css::frame::XModel > const & model,
                                                                             const ::rtl::OUString & location) :
-    m_xContext(context), m_xFactory(context.get()->getServiceManager()), m_xModel(model), m_extensionBase(location)
+    m_xContext(context), m_xFactory(context.get()->getServiceManager()), m_xModel(model),
+    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
+               css::uno::UNO_QUERY),
+    m_extensionBase(location)
 {
 #ifdef GROOO_DEBUG
     logMsg("FeatureDialogEventHandler constructor\n");
@@ -223,7 +226,8 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
     css::uno::Reference<css::awt::tree::XMutableTreeNode> fontNode = xMutableDataModel.get()->createNode(css::uno::Any(fontNameOnly + fontDesc), sal_False);
     css::uno::Reference<css::awt::tree::XTreeNode> xFontTreeNode(fontNode, css::uno::UNO_QUERY);
     fontNode.get()->setDataValue(css::uno::Any(fontNameOnly));
-    ::rtl::OUString defaultLabel = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(" (Default)"));
+    ::rtl::OUString defaultLabel =
+        getResourceString(m_xResource, "GraphiteFeatures.DefaultLabel");
     GraphiteFontInfo & grInfo = GraphiteFontInfo::getFontInfo();
     rootNode.get()->appendChild(fontNode);
     m_xTree.get()->makeNodeVisible(xFontTreeNode);
@@ -327,7 +331,7 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
    // xTextCursorSupplier.set(m_xController, css::uno::UNO_QUERY);
     //if (xTextCursorSupplier.is())
     //    xTextCursor.set(xTextCursorSupplier->getViewCursor());
-    ::rtl::OUString rootName = ::rtl::OUString::createFromAscii("Fonts");
+    ::rtl::OUString rootName = getResourceString(m_xResource, "GraphiteFeatures.Fonts");
     css::uno::Reference<css::awt::tree::XMutableTreeNode> rootNode = xMutableDataModel.get()->createNode(css::uno::Any(rootName), sal_False);
     xMutableDataModel.get()->setRoot(rootNode);
 
@@ -435,8 +439,9 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
         ::rtl::OUString ouCtl;
         ::rtl::OUString ouAsian;
 
-        ::rtl::OUString complexFontDesc = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(" (CTL)"));
-        ::rtl::OUString asianFontDesc = ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM(" (Asian)"));
+        ::rtl::OUString westernFontDesc = getResourceString(m_xResource, "GraphiteFeatures.Western");
+        ::rtl::OUString complexFontDesc = getResourceString(m_xResource, "GraphiteFeatures.CTL");
+        ::rtl::OUString asianFontDesc = getResourceString(m_xResource, "GraphiteFeatures.Asian");
 
         css::uno::Reference< css::beans::XPropertySetInfo >
             xTextPropSetInfo(m_xTextProperties->getPropertySetInfo());
@@ -446,7 +451,7 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
             aFontName = m_xTextProperties.get()->
                 getPropertyValue(FONT_PROPERTY_NAME[WESTERN_SCRIPT]);
             ouWestern = aFontName.get< ::rtl::OUString>();
-            addFontFeatures(xMutableDataModel, rootNode, WESTERN_SCRIPT, ouWestern, ::rtl::OUString());
+            addFontFeatures(xMutableDataModel, rootNode, WESTERN_SCRIPT, ouWestern, westernFontDesc);
         }
         if (xTextPropSetInfo->hasPropertyByName(FONT_PROPERTY_NAME[CTL_SCRIPT]))
         {

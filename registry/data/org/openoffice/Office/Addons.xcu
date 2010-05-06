@@ -6,7 +6,7 @@
         <node oor:name="org.sil.graphite.graphiteoptions" oor:op="replace">
             <prop oor:name="Title" oor:type="xs:string">
           <value/>
-          <value xml:lang="en">Graphite</value>
+          <value xml:lang="en">Graphite Features...</value>
         </prop>
         <prop oor:name="Target" oor:type="xs:string">
           <value>_self</value>

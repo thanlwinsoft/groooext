@@ -44,6 +44,9 @@ namespace org { namespace sil { namespace graphite {
     ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceWithLocation> getResource(
         ::com::sun::star::uno::Reference< ::com::sun::star::uno::XComponentContext > const & context,
                     ::rtl::OUString basename);
+    ::rtl::OUString getResourceString(
+        ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceResolver> resource,
+                                      const char * resourceId);
 
 	::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet> getTextPropertiesFromModel(
 		::com::sun::star::uno::Reference< ::com::sun::star::frame::XModel > xModel,

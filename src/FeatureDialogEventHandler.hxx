@@ -41,12 +41,11 @@
 #include "com/sun/star/awt/tree/XTreeEditListener.hpp"
 #include "com/sun/star/beans/XPropertySet.hpp"
 #include "com/sun/star/view/XSelectionChangeListener.hpp"
-//#include "com/sun/star
+#include "com/sun/star/resource/XStringResourceResolver.hpp"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/frame/XModel.hpp"
 #include "com/sun/star/frame/XController.hpp"
-
 
 namespace gr { class Font; }
 
@@ -141,6 +140,7 @@ private:
     css::uno::Reference<css::awt::XCheckBox> m_xUpdateStyle;
     css::uno::Reference< css::beans::XPropertySet> m_xTextProperties;
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
+    css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
     ::rtl::OUString m_extensionBase;
     ::gr::Font * m_fonts[NUM_SCRIPTS]; // normal, ctl, asian
     std::map<sal_uInt32, sal_Int32> m_featureSettings[NUM_SCRIPTS];

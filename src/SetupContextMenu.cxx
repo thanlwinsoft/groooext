@@ -57,6 +57,7 @@
 #include "com/sun/star/table/XCellRange.hpp"
 #include "com/sun/star/table/XTableChart.hpp"
 #include "com/sun/star/table/XTableCharts.hpp"
+#include "com/sun/star/resource/XStringResourceResolver.hpp"
 #include "com/sun/star/sheet/XSpreadsheetDocument.hpp"
 #include "com/sun/star/sheet/XSpreadsheet.hpp"
 #include "com/sun/star/sheet/XSpreadsheets.hpp"
@@ -121,10 +122,13 @@ private:
     css::uno::Reference< css::frame::XFrame > m_xFrame;
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
     css::uno::Reference< css::frame::XController > m_xController;
+    css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
 };
 
 org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css::uno::XComponentContext > const & context) :
-    m_xContext(context)
+    m_xContext(context),
+    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
+                css::uno::UNO_QUERY)
 {
 #ifdef GROOO_DEBUG
     logMsg("SetupContextMenu constructor\n");
@@ -467,7 +471,8 @@ org::sil::graphite::SetupContextMenu::notifyContextMenuExecute( const ::com::sun
 		css::uno::Reference<css::beans::XPropertySet> xGrSeparator(xFactory.get()->createInstance (actionTriggerSeparator), css::uno::UNO_QUERY);
         css::uno::Reference<css::beans::XPropertySet> xGrMenuRoot(xFactory.get()->createInstance (actionTrigger), css::uno::UNO_QUERY);
         css::uno::Reference<css::beans::XPropertySet> xGrSubMenu(xFactory.get()->createInstance (actionTriggerContainer), css::uno::UNO_QUERY);
-        css::uno::Any grFeaturesText(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Graphite Features...")));
+        css::uno::Any grFeaturesText(
+            getResourceString(m_xResource, "GraphiteFeatures.MenuLabel"));
         xGrMenuRoot.get()->setPropertyValue(PROP_TEXT, grFeaturesText);
         css::uno::Any grFeaturesCommand(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("org.sil.graphite.graphiteoptions:contextmenu")));
         xGrMenuRoot.get()->setPropertyValue(PROP_COMMAND_URL, grFeaturesCommand);

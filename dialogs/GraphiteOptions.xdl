@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
-<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="260" dlg:height="180" dlg:help-text="&amp;34.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;35.GraphiteOptions.Title" dlg:withtitlebar="false">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="260" dlg:height="180" dlg:help-text="&amp;80.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;81.GraphiteOptions.Title" dlg:withtitlebar="false">
  <dlg:bulletinboard>
-  <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="5" dlg:top="10" dlg:width="130" dlg:height="165" dlg:help-text="&amp;36.GraphiteOptions.GraphiteFrameControl.HelpText">
-   <dlg:title dlg:value="&amp;37.GraphiteOptions.GraphiteFrameControl.Label"/>
+  <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="5" dlg:top="10" dlg:width="130" dlg:height="165" dlg:help-text="&amp;82.GraphiteOptions.GraphiteFrameControl.HelpText">
+   <dlg:title dlg:value="&amp;83.GraphiteOptions.GraphiteFrameControl.Label"/>
   </dlg:titledbox>
-  <dlg:checkbox dlg:id="EnableGraphiteCheckBox" dlg:tab-index="1" dlg:left="10" dlg:top="20" dlg:width="120" dlg:height="11" dlg:help-text="&amp;38.GraphiteOptions.EnableGraphiteCheckBox.HelpText" dlg:value="&amp;39.GraphiteOptions.EnableGraphiteCheckBox.Label" dlg:checked="false"/>
-  <dlg:text dlg:id="EnableGraphiteLabel" dlg:tab-index="2" dlg:left="10" dlg:top="35" dlg:width="120" dlg:height="101" dlg:help-text="&amp;40.GraphiteOptions.EnableGraphiteLabel.HelpText" dlg:value="&amp;41.GraphiteOptions.EnableGraphiteLabel.Label" dlg:multiline="true"/>
-  <dlg:titledbox dlg:id="FrameInstalledGraphiteFonts" dlg:tab-index="3" dlg:left="140" dlg:top="10" dlg:width="115" dlg:height="165" dlg:help-text="&amp;42.GraphiteOptions.FrameInstalledGraphiteFonts.HelpText">
-   <dlg:title dlg:value="&amp;43.GraphiteOptions.FrameInstalledGraphiteFonts.Label"/>
+  <dlg:checkbox dlg:id="EnableGraphiteCheckBox" dlg:tab-index="1" dlg:left="10" dlg:top="20" dlg:width="120" dlg:height="11" dlg:help-text="&amp;84.GraphiteOptions.EnableGraphiteCheckBox.HelpText" dlg:value="&amp;85.GraphiteOptions.EnableGraphiteCheckBox.Label" dlg:checked="false"/>
+  <dlg:text dlg:id="EnableGraphiteLabel" dlg:tab-index="2" dlg:left="10" dlg:top="35" dlg:width="120" dlg:height="101" dlg:help-text="&amp;86.GraphiteOptions.EnableGraphiteLabel.HelpText" dlg:value="&amp;87.GraphiteOptions.EnableGraphiteLabel.Label" dlg:multiline="true"/>
+  <dlg:titledbox dlg:id="FrameInstalledGraphiteFonts" dlg:tab-index="3" dlg:left="140" dlg:top="10" dlg:width="115" dlg:height="165" dlg:help-text="&amp;88.GraphiteOptions.FrameInstalledGraphiteFonts.HelpText">
+   <dlg:title dlg:value="&amp;89.GraphiteOptions.FrameInstalledGraphiteFonts.Label"/>
   </dlg:titledbox>
-  <dlg:menulist dlg:id="GraphiteFontListBox" dlg:tab-index="4" dlg:left="145" dlg:top="20" dlg:width="105" dlg:height="150" dlg:help-text="&amp;44.GraphiteOptions.GraphiteFontListBox.HelpText"/>
-  <dlg:text dlg:id="GraphiteEnabledLabel" dlg:tab-index="5" dlg:left="15" dlg:top="155" dlg:width="100" dlg:height="15" dlg:help-text="&amp;45.GraphiteOptions.GraphiteEnabledLabel.HelpText" dlg:value="&amp;46.GraphiteOptions.GraphiteEnabledLabel.Label"/>
-  <dlg:text dlg:id="GraphiteDisabledLabel" dlg:tab-index="6" dlg:visible="false" dlg:left="10" dlg:top="155" dlg:width="120" dlg:height="15" dlg:help-text="&amp;47.GraphiteOptions.GraphiteDisabledLabel.HelpText" dlg:value="&amp;48.GraphiteOptions.GraphiteDisabledLabel.Label"/>
+  <dlg:menulist dlg:id="GraphiteFontListBox" dlg:tab-index="4" dlg:left="145" dlg:top="20" dlg:width="105" dlg:height="150" dlg:help-text="&amp;90.GraphiteOptions.GraphiteFontListBox.HelpText"/>
+  <dlg:text dlg:id="GraphiteEnabledLabel" dlg:tab-index="5" dlg:left="10" dlg:top="155" dlg:width="100" dlg:height="15" dlg:help-text="&amp;91.GraphiteOptions.GraphiteEnabledLabel.HelpText" dlg:value="&amp;92.GraphiteOptions.GraphiteEnabledLabel.Label"/>
  </dlg:bulletinboard>
 </dlg:window>
