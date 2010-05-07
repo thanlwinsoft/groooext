@@ -191,100 +191,10 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
         logMsg("Job Environment has model\n");
 #endif
     css::uno::Reference< css::frame::XModel > xModel;
-    if (envModel.hasValue())
+    if (isGraphiteEnabled() && envModel.hasValue())
     {
         xModel.set(envModel.get< css::uno::Reference< css::frame::XModel > >());
 		addMenuInterceptionToModel(xModel);
-#if 0
-			css::uno::Reference<css::lang::XMultiServiceFactory> xMSFactory(xModel, css::uno::UNO_QUERY);
-			if (xMSFactory.is())
-			{
-				css::uno::Reference<css::container::XIndexAccess> embeddedObjects;
-				css::uno::Reference<css::container::XIndexAccess> embeddedChartObjects;
-				try
-				{
-					embeddedObjects.set(
-						xMSFactory->createInstance(rtl::OUString::createFromAscii("com.sun.star.text.TextEmbeddedObjects")),
-						css::uno::UNO_QUERY);
-#ifdef GROOO_DEBUG
-					logMsg("got TextEmbeddedObjects service %d\n", embeddedObjects.is());
-#endif
-				}
-				catch (css::uno::Exception e)
-				{
-#ifdef GROOO_DEBUG
-					logMsg("failed to get TextEmbeddedObjects service\n");
-#endif
-				}
-				try
-				{
-					embeddedChartObjects.set(
-						xMSFactory->createInstance(rtl::OUString::createFromAscii("com.sun.star.table.TableCharts")),
-						css::uno::UNO_QUERY);
-#ifdef GROOO_DEBUG
-					logMsg("got TableCharts service %d\n", embeddedChartObjects.is());
-#endif
-				}
-				catch (css::uno::Exception e)
-				{
-#ifdef GROOO_DEBUG
-					logMsg("failed to get TableCharts service\n");
-#endif
-				}
-				if (embeddedObjects.is())
-				{
-					logMsg("doc has %d embedded objects\n", embeddedObjects->getCount());
-					for (int i = 0; i < embeddedObjects->getCount(); i++)
-					{
-						css::uno::Any anEmbedded = embeddedObjects->getByIndex(i);
-						css::uno::Reference < css::document::XEmbeddedObjectSupplier > embeddedSupplier;
-						if (anEmbedded.has< css::uno::Reference <css::document::XEmbeddedObjectSupplier> >())
-						{
-							embeddedSupplier.set(anEmbedded.get<css::uno::Reference 
-								<css::document::XEmbeddedObjectSupplier> >(),
-								css::uno::UNO_QUERY);
-							css::uno::Reference<css::lang::XComponent> xComponent = embeddedSupplier->getEmbeddedObject();
-							logMsg("have embedded component %d\n", xComponent.is());
-						}
-						else
-						{
-#ifdef GROOO_DEBUG
-							logMsg("embeded object is not an XEmbeddedObjectSupplier\n");
-#endif
-						}
-					}
-				}
-				if (embeddedChartObjects.is())
-				{
-					logMsg("doc has %d embedded objects\n", embeddedChartObjects->getCount());
-					for (int i = 0; i < embeddedChartObjects->getCount(); i++)
-					{
-						css::uno::Any anEmbedded = embeddedChartObjects->getByIndex(i);
-						css::uno::Reference < css::document::XEmbeddedObjectSupplier > embeddedSupplier;
-						if (anEmbedded.has< css::uno::Reference <css::document::XEmbeddedObjectSupplier> >())
-						{
-							embeddedSupplier.set(anEmbedded.get<css::uno::Reference 
-								<css::document::XEmbeddedObjectSupplier> >(),
-								css::uno::UNO_QUERY);
-							css::uno::Reference<css::lang::XComponent> xComponent = embeddedSupplier->getEmbeddedObject();
-							logMsg("have embedded component %d\n", xComponent.is());
-						}
-						else
-						{
-#ifdef GROOO_DEBUG
-							logMsg("embeded object is not an XEmbeddedObjectSupplier\n");
-#endif
-						}
-					}
-				}
-			}
-#endif
-			// TODO look for embedded documents such as charts and add interceptors to them as well
-			// embedded documents don't seem to fire the onDocumentOpenned event
-			// com.sun.star.document.XEmbeddedObjectSupplier
-			// e.g. XTableCharts.getByIndex(i) or TextEmbeddedObjects.getByIndex(i)
-			// XEmbeddedObjectSupplier::getEmbeddedObject()
-			//css::uno::Reference<css::document::
     }
     css::uno::Sequence< css::beans::NamedValue > jobReturn(3);
     css::beans::NamedValue deactivate(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Deactivate")), css::uno::Any(sal_False));

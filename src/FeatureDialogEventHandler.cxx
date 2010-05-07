@@ -87,7 +87,6 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
 #ifdef GROOO_DEBUG
     logMsg("FeatureDialogEventHandler constructor\n");
 #endif
-    m_fonts[0] = m_fonts[1] = m_fonts[2] = NULL;
 }
 
 // ::com::sun::star::awt::XDialogEventHandler:
@@ -129,13 +128,6 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::disposing(const css
 #ifdef GROOO_DEBUG
     logMsg("FeatureDialogEventHandler::disposing\n");
 #endif
-    GraphiteFontInfo & grInfo = GraphiteFontInfo::getFontInfo();
-    for (int i = 0; i < 3; i++)
-        if (m_fonts[i])
-        {
-            grInfo.unloadFont(m_fonts[i]);
-            m_fonts[i] = NULL;
-        }
 }
 
 /**
@@ -222,7 +214,7 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
     {
         fontNameOnly = fontName;
     }
-    m_fontNamesWithFeatures[fontScript] = fontNameOnly;
+    m_fontNames[fontScript] = fontNameOnly;
     css::uno::Reference<css::awt::tree::XMutableTreeNode> fontNode = xMutableDataModel.get()->createNode(css::uno::Any(fontNameOnly + fontDesc), sal_False);
     css::uno::Reference<css::awt::tree::XTreeNode> xFontTreeNode(fontNode, css::uno::UNO_QUERY);
     fontNode.get()->setDataValue(css::uno::Any(fontNameOnly));
@@ -235,7 +227,6 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
     if (grInfo.isGraphiteFont(fontNameOnly))
     {
         gr::Font * grFont = grInfo.loadFont(fontNameOnly);
-        m_fonts[rootNode.get()->getChildCount() - 1] = grFont;
         if (grFont)
         {
             gr::lgid en_US(0x0409);
@@ -306,11 +297,9 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
                 }
                 ++iFeat;
             }
+			grInfo.unloadFont(grFont);
+            grFont = NULL;
         }
-    }
-    else
-    {
-        m_fonts[rootNode.get()->getChildCount() - 1] = NULL;
     }
 }
 
@@ -417,7 +406,7 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
         else
         {
 #ifdef GROOO_DEBUG
-            logMsg("graphics not found\n");
+            logMsg("graphics styles not found\n");
 #endif
         }
     }
@@ -714,16 +703,22 @@ void org::sil::graphite::FeatureDialogEventHandler::setFontNames(void)
     {
         for (int i = 0; i < NUM_SCRIPTS; i++)
         {
-            if (m_fontNamesWithFeatures[i].getLength() > 0)
+            if (m_fontNames[i].getLength() > 0)
             {
-                m_xTextProperties->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
-                // set it on the style as well if requested
-                if (m_xStyleTextProperties.is() && m_xUpdateStyle.get()->getState())
-                    m_xStyleTextProperties.get()->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(m_fontNamesWithFeatures[i]));
+                ::rtl::OUString fontNameWithFeature = m_fontNames[i];
+				if (m_featureNames[i].getLength() > 0)
+					fontNameWithFeature += GraphiteFontInfo::FEAT_PREFIX + m_featureNames[i];
+
+				m_xTextProperties->setPropertyValue(FONT_PROPERTY_NAME[i], css::uno::Any(fontNameWithFeature));
+
+				// set it on the style as well if requested
+				if (m_xStyleTextProperties.is() && m_xUpdateStyle.get()->getState())
+                    m_xStyleTextProperties.get()->setPropertyValue(FONT_PROPERTY_NAME[i], 
+					css::uno::Any(fontNameWithFeature));
 #ifdef GROOO_DEBUG
                 ::rtl::OString msg;
                 ::rtl::OString setName;
-                m_fontNamesWithFeatures[i].convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
+                fontNameWithFeature.convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
                 css::uno::Any aSetName =
                     m_xTextProperties->getPropertyValue(FONT_PROPERTY_NAME[i]);
                 aSetName.get< ::rtl::OUString >().convertToString(&setName, RTL_TEXTENCODING_UTF8, 128);
@@ -740,16 +735,20 @@ void org::sil::graphite::FeatureDialogEventHandler::setFontNames(void)
 
 void org::sil::graphite::FeatureDialogEventHandler::storeFeatures(void)
 {
+    GraphiteFontInfo & grInfo = GraphiteFontInfo::getFontInfo();
     for (int i = 0; i < 3; i++)
     {
+        if (!grInfo.isGraphiteFont(m_fontNames[i]))
+            continue;
         ::rtl::OUStringBuffer featBuilder;
-        if (m_fonts[i] != NULL && m_featureSettings[i].size() > 0)
+		gr::Font * font = grInfo.loadFont(m_fontNames[i]);
+        if (font != NULL && m_featureSettings[i].size() > 0)
         {
             // analyze the feature settings into a revised fontname
             std::map<sal_uInt32, sal_Int32>::iterator iSetFeat = m_featureSettings[i].begin();
             while (iSetFeat != m_featureSettings[i].end())
             {
-                std::pair<gr::FeatureIterator, gr::FeatureIterator>iFeats = m_fonts[i]->getFeatures();
+                std::pair<gr::FeatureIterator, gr::FeatureIterator>iFeats = font->getFeatures();
                 gr::FeatureIterator iFeat = iFeats.first;
                 while (iFeat != iFeats.second)
                 {
@@ -762,7 +761,7 @@ void org::sil::graphite::FeatureDialogEventHandler::storeFeatures(void)
                 // found the feature
                 if (iFeat != iFeats.second)
                 {
-                    gr::FeatureSettingIterator defaultSetting = m_fonts[i]->getDefaultFeatureValue(iFeat);
+                    gr::FeatureSettingIterator defaultSetting = font->getDefaultFeatureValue(iFeat);
                     if (*defaultSetting != iSetFeat->second)
                     {
                         // TODO
@@ -777,7 +776,8 @@ void org::sil::graphite::FeatureDialogEventHandler::storeFeatures(void)
             }
         }
         if (featBuilder.getLength()>0)
-            m_fontNamesWithFeatures[i] += GraphiteFontInfo::FEAT_PREFIX + featBuilder.makeStringAndClear();
+            m_featureNames[i] += featBuilder.makeStringAndClear();
+		GraphiteFontInfo::getFontInfo().unloadFont(font);
     }
 }
 

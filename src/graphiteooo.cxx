@@ -111,9 +111,9 @@ void osg::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > prop
     }
 }
 
-void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> interface)
+void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> xInterface)
 {
-    css::uno::Reference<css::lang::XServiceInfo> xServiceInfo(interface, css::uno::UNO_QUERY);
+    css::uno::Reference<css::lang::XServiceInfo> xServiceInfo(xInterface, css::uno::UNO_QUERY);
     if (xServiceInfo.is())
     {
         ::rtl::OString aServiceName;
@@ -125,6 +125,31 @@ void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::
             osg::logMsg("service: %s\n", aServiceName.getStr());
         }
     }
+}
+
+sal_Bool osg::isGraphiteEnabled()
+{
+	sal_Bool environmentGraphiteEnabled = sal_False;
+#ifdef _MSC_VER
+    char * pDisableGraphiteStr = NULL;
+	size_t envBufSize = 0;
+	if (_dupenv_s(&pDisableGraphiteStr, &envBufSize, SAL_DISABLE_GRAPHITE))
+		pDisableGraphiteStr = NULL;
+#else
+	const char * pDisableGraphiteStr = getenv(SAL_DISABLE_GRAPHITE);
+#endif
+
+    if (pDisableGraphiteStr == NULL || pDisableGraphiteStr[0]=='0')
+        environmentGraphiteEnabled = sal_True;
+
+#ifdef _MSC_VER
+	if (pDisableGraphiteStr)
+	{
+		free(pDisableGraphiteStr);
+		pDisableGraphiteStr = NULL;
+	}
+#endif
+	return environmentGraphiteEnabled;
 }
 
 css::uno::Reference< css::beans::XPropertySet> osg::getChartComponentProperties(

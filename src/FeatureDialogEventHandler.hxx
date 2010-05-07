@@ -142,9 +142,9 @@ private:
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
     css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
     ::rtl::OUString m_extensionBase;
-    ::gr::Font * m_fonts[NUM_SCRIPTS]; // normal, ctl, asian
     std::map<sal_uInt32, sal_Int32> m_featureSettings[NUM_SCRIPTS];
-    ::rtl::OUString m_fontNamesWithFeatures[NUM_SCRIPTS];
+    ::rtl::OUString m_fontNames[NUM_SCRIPTS];
+	::rtl::OUString m_featureNames[NUM_SCRIPTS];
 };
 
 }}}

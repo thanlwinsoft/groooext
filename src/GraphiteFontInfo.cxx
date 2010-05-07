@@ -427,10 +427,14 @@ gr::Font * org::sil::graphite::WinGraphiteFontInfo::loadFont(const ::rtl::OUStri
 	mhFontOld = (HFONT) SelectObject(mHdc, mhFontNew);
 
 	if (winFont == NULL)
+    {
 		winFont = new gr::WinFont(mHdc);
-
-	winFont->replaceDC(mHdc);
-
+        mFontMap[fontName] = winFont;
+    }
+    else
+    {
+	    winFont->replaceDC(mHdc);
+    }
 	return winFont;
 }
 

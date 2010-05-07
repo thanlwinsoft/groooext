@@ -40,7 +40,7 @@ namespace org { namespace sil { namespace graphite {
 
 	void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
 
-    void printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> interface);
+    void printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::uno::XInterface> xInterface);
 
     ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceWithLocation> getResource(
         ::com::sun::star::uno::Reference< ::com::sun::star::uno::XComponentContext > const & context,
@@ -56,6 +56,8 @@ namespace org { namespace sil { namespace graphite {
     ::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet> getChartComponentProperties(
         ::com::sun::star::uno::Reference < ::com::sun::star::chart2::XChartDocument> & xChartDocument,
         ::rtl::OUString selectionId);
+
+	sal_Bool isGraphiteEnabled();
 }}}
 
 #endif

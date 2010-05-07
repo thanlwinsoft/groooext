@@ -7,7 +7,7 @@
         <!-- See svx/source/cui/treeopt.cxx for the names to use here. -->
         <node oor:name="ProductName" oor:op="fuse">
             <node oor:name="Leaves">
-                <node oor:name="org.sil.graphite.GraphiteOptions" oor:op="fuse">
+                <node oor:name="org.sil.graphite.GraphiteOptionsLeaf" oor:op="replace">
                     <prop oor:name="Id">
                       <value>org.sil.graphite.GraphiteOptions</value>
                     </prop>
@@ -16,9 +16,6 @@
                     </prop>
                     <prop oor:name="OptionsPage">
                       <value>%origin%/../../../../../dialogs/GraphiteOptions.xdl</value>
-                    </prop>
-                    <prop oor:name="AllModules">
-                        <value>true</value>
                     </prop>
                     <prop oor:name="EventHandlerService">
                       <value>org.sil.graphite.DialogEventHandler</value>

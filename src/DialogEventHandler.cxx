@@ -156,25 +156,8 @@ org::sil::graphite::DialogEventHandler::DialogEventHandler(css::uno::Reference< 
             getByName(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("Graphite")));
         css::uno::Reference< css::beans::XPropertySet > graphitePropertySet(graphiteOptions, css::uno::UNO_QUERY);
 
-        sal_Bool environmentGraphiteEnabled = sal_False;
-#ifdef _MSC_VER
-        char * pDisableGraphiteStr = NULL;
-		size_t envBufSize = 0;
-		if (_dupenv_s(&pDisableGraphiteStr, &envBufSize, SAL_DISABLE_GRAPHITE))
-			pDisableGraphiteStr = NULL;
-#else
-		const char * pDisableGraphiteStr = getenv(SAL_DISABLE_GRAPHITE);
-#endif
-        if (pDisableGraphiteStr == NULL || pDisableGraphiteStr[0]=='0')
-            environmentGraphiteEnabled = sal_True;
+        sal_Bool environmentGraphiteEnabled = isGraphiteEnabled();
 
-#ifdef _MSC_VER
-		if (pDisableGraphiteStr)
-		{
-			free(pDisableGraphiteStr);
-			pDisableGraphiteStr = NULL;
-		}
-#endif
 		bool updatedEnvVariable = false;
         if (eventValue.equalsAscii("ok"))
         {
