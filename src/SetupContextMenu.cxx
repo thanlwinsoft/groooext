@@ -382,6 +382,7 @@ org::sil::graphite::SetupContextMenu::selectionChanged( const ::com::sun::star::
     if (xSupplier.is())
     {
         css::uno::Any aSelection = xSupplier->getSelection();
+        if (!aSelection.hasValue()) return;
 
         css::uno::Reference<css::lang::XMultiServiceFactory>xFactory(m_xContext->getServiceManager(), css::uno::UNO_QUERY);
         if (xFactory.is())
