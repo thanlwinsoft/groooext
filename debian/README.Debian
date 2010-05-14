@@ -1,0 +1,8 @@
+openoffice.org-graphite for Debian
+----------------------------------
+
+This package is designed to work with the platform OpenOffice.org Debian/Ubuntu
+packages. It has not been tested with the OpenOffice.org packages direct from
+Oracle.
+
+ -- Keith Stribley <devel@thanlwinsoft.org>  Fri, 14 May 2010 11:50:31 +0630

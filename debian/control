@@ -1,0 +1,17 @@
+Source: openoffice.org-graphite
+Section: editors
+Priority: optional
+Maintainer: Keith Stribley <devel@thanlwinsoft.org>
+Build-Depends: debhelper (>= 7), cmake, openoffice.org-dev
+Standards-Version: 3.8.4
+Homepage: http://www.thanlwinsoft.org/groooext
+
+Package: openoffice.org-graphite
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, openoffice.org-common (>=1:3.2.0), libgraphite3
+Description: Graphite Font extension for OpenOffice.org
+ Enables Graphite Font Rendering to be enabled/disabled from the Options
+ dialog. A Graphite Features item is added to the context menu when the
+ current selection contains a Graphite font to enable you to easily select
+ Graphite features.
+
