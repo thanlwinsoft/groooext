@@ -26,9 +26,18 @@ set(OOO_VERSION 3.2) # used for basis directory
 set (graphiteooo_VERSION_MAJOR 0)
 set (graphiteooo_VERSION_MINOR 1)
 
-execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
+if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
+    # assume that the last tag was for a minor version and use the distance
+    file(STRINGS ${PROJECT_SOURCE_DIR}/.hg_archival.txt HG_TAG_DISTANCE REGEX "^latesttagdistance:.*")
+    string(REPLACE "latesttagdistance: " "" HG_TAG_DISTANCE ${HG_TAG_DISTANCE})
+    set(graphiteooo_VERSION_PATCH ${HG_TAG_DISTANCE})
+else (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
+    # use the hg id number as the patch version
+    execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
+    set(graphiteooo_VERSION_PATCH ${MERCURIAL_VERSION})
+endif (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
