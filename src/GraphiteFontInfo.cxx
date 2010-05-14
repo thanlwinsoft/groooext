@@ -97,7 +97,7 @@ static bool isValidChar(char c)
 #ifdef _MSC_VER
 		_snprintf_s(aInt, 12, 12, "%lu", id);
 #else
-        snprintf(aInt, 12, "%lu", id);
+        snprintf(aInt, 12, "%u", id);
 #endif
         return ::rtl::OUString::createFromAscii(aInt);
     }
@@ -109,7 +109,7 @@ static bool isValidChar(char c)
 #ifdef _MSC_VER
 	_snprintf_s(aInt, 12, 12, "%ld", setting);
 #else
-    snprintf(aInt, 12, "%ld", setting);
+    snprintf(aInt, 12, "%d", setting);
 #endif
     return ::rtl::OUString::createFromAscii(aInt);
 }
