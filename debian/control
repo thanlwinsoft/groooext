@@ -2,9 +2,9 @@ Source: openoffice.org-graphite
 Section: editors
 Priority: optional
 Maintainer: Keith Stribley <devel@thanlwinsoft.org>
-Build-Depends: debhelper (>= 7), cmake, openoffice.org-dev
+Build-Depends: debhelper (>= 7), cmake, openoffice.org-dev, libgraphite-dev
 Standards-Version: 3.8.4
-Homepage: http://www.thanlwinsoft.org/groooext
+Homepage: http://www.thanlwinsoft.org/GraphiteOOoExt/
 
 Package: openoffice.org-graphite
 Architecture: any
