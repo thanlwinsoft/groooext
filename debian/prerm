@@ -19,7 +19,7 @@ set -e
 
 case "$1" in
     remove|upgrade|deconfigure)
-        unopkg remove org.sil.graphite.GraphiteOptions
+        unopkg remove --shared org.sil.graphite.GraphiteOptions
     ;;
 
     failed-upgrade)
