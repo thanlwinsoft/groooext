@@ -20,12 +20,24 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
 project (graphiteooo)
 enable_language(CXX C)
 
+set(OOO_VERSION 3.2) # used for basis directory
+
 # The version number.
 set (graphiteooo_VERSION_MAJOR 0)
-set (graphiteooo_VERSION_MINOR 0)
+set (graphiteooo_VERSION_MINOR 1)
 
-execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION)
-string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
+if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
+    # assume that the last tag was for a minor version and use the distance
+    file(STRINGS ${PROJECT_SOURCE_DIR}/.hg_archival.txt HG_TAG_DISTANCE REGEX "^latesttagdistance:.*")
+    string(REPLACE "latesttagdistance: " "" HG_TAG_DISTANCE ${HG_TAG_DISTANCE})
+    set(graphiteooo_VERSION_PATCH ${HG_TAG_DISTANCE})
+else (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
+    # use the hg id number as the patch version
+    execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
+    set(graphiteooo_VERSION_PATCH ${MERCURIAL_VERSION})
+endif (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -38,16 +50,36 @@ configure_file (
 include_directories("${PROJECT_BINARY_DIR}")
 
 # OO_SDK_URE_HOME is setup using the setsdkenv_* scripts
-find_path(OO_SDK_IDL com/sun/star/udk-modules.idl PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES idl DOC "OO IDL directory")
-find_path(OO_SDK_INCLUDE udkversion.mk PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES include DOC "OO SDK include directory")
-find_library(OO_SDK_UNO_SAL NAMES uno_sal isal PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "SAL library")
-find_library(OO_SDK_UNO_CPPU NAMES uno_cppu icppu PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "CPPU library")
-find_library(OO_SDK_UNO_CPPUHELPER NAMES uno_cppuhelpergcc3 icppuhelper PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES lib DOC "CPPU helper library")
+find_path(OO_SDK_IDL com/sun/star/udk-modules.idl
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES idl DOC "OO IDL directory")
+find_path(OO_SDK_INCLUDE udkversion.mk
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES include DOC "OO SDK include directory")
+find_library(OO_SDK_UNO_SAL NAMES uno_sal isal 
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES lib DOC "SAL library")
+find_library(OO_SDK_UNO_CPPU NAMES uno_cppu icppu 
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES lib DOC "CPPU library")
+find_library(OO_SDK_UNO_CPPUHELPER NAMES uno_cppuhelpergcc3 icppuhelper 
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES lib DOC "CPPU helper library")
 
-find_program(OO_SDK_CPPUMAKER cppumaker PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis3.2/sdk PATH_SUFFIXES bin DOC "IDL compiler")
-find_path(OO_SDK_RDB types.rdb PATHS ENV OO_SDK_URE_HOME ENV OO_SDK_HOME PATH_SUFFIXES share/misc misc DOC "URE RDB directory")
-find_path(OO_BASIS_PROGRAM offapi.rdb PATHS ENV OO_SDK_HOME PATH_SUFFIXES ../program DOC "Basis Program directory")
-find_path(OO_SDK_URE_BIN version.ini versionrc PATHS ENV OO_SDK_URE_HOME PATH_SUFFIXES bin DOC "URE bin directory")
+find_program(OO_SDK_CPPUMAKER cppumaker 
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/sdk
+    PATH_SUFFIXES bin DOC "IDL compiler")
+find_path(OO_SDK_RDB types.rdb 
+    PATHS ENV OO_SDK_URE_HOME ENV OO_SDK_HOME /usr/lib/ure 
+    PATH_SUFFIXES share/misc misc DOC "URE RDB directory")
+find_path(OO_BASIS_PROGRAM offapi.rdb
+    PATHS ENV OO_SDK_HOME /usr/lib/openoffice/basis${OOO_VERSION}/program
+    PATH_SUFFIXES ../program DOC "Basis Program directory")
+find_path(OO_SDK_URE_BIN version.ini versionrc 
+    PATHS ENV OO_SDK_URE_HOME /usr/lib/ure 
+    PATH_SUFFIXES bin DOC "URE bin directory")
+find_program(UNOPKG unopkg PATHS ENV OFFICE_PROGRAM_PATH /usr/bin
+    DOC "OpenOffice.org Extension Manager")
 find_program(ZIP zip)
 
 include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
@@ -62,16 +94,20 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     find_package(PkgConfig)
     pkg_check_modules(FC REQUIRED fontconfig)
     pkg_check_modules(GR REQUIRED silgraphite)
-    add_definitions(${FC_CFLAGS} -I${FREETYPE_INCLUDE_DIR_freetype2})
+    add_definitions(${FC_CFLAGS} ${GR_CFLAGS} -I${FREETYPE_INCLUDE_DIR_freetype2})
     set(GR_DEBUG_LIBRARY ${GR_LIBRARIES})
     set(GR_RELEASE_LIBRARY ${GR_LIBRARIES})
     set(GROOO_OUTPUT_DIR "")
     set(PLATFORM_LIBRARIES "")
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
+    # uname -p $(CMAKE_SYSTEM_PROCESSOR) gives unknown on Ubuntu
+    execute_process(COMMAND uname -m
+        OUTPUT_VARIABLE SYSTEM_MACHINE OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if (${SYSTEM_MACHINE} STREQUAL "i686")
         set(EXTENSION_PLATFORM linux_x86)
-    elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "amd64")
-        set(EXTENSION_PLATFORM linux_x86-64)
-    endif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "i686")
+    elseif (${SYSTEM_MACHINE} STREQUAL "x86_64")
+        set(EXTENSION_PLATFORM linux_x86_64)
+    endif (${SYSTEM_MACHINE} STREQUAL "i686")
+    message( "Platform=${EXTENSION_PLATFORM}" )
 
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-DWNT=1 -DCPPU_ENV=msci /wd4290 /wd4800 /W4)
@@ -260,6 +296,14 @@ add_custom_target(idlclean
     COMMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/com
     COMMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/drafts
     COMMENT clean the IDL generated headers)
+
+add_custom_target(install
+    COMMAND ${UNOPKG} add --shared ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMENT install the extension system wide - requires admin permissions)
+
+add_custom_target(uninstall
+    COMMAND ${UNOPKG} remove --shared org.sil.graphite.GraphiteOptions
+    COMMENT install the extension system wide - requires admin permissions)
 
 add_dependencies(copy_files graphiteooo)
 add_dependencies(ooextension copy_files)

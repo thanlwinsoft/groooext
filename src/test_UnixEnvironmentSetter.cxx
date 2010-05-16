@@ -103,7 +103,7 @@ static int runTest(int num, const char * fileData, const char * value, bool repl
            stat(filepath, &filestat);
            if (filestat.st_size != static_cast<int>(strlen(fileData)))
            {
-               fprintf(stderr, "Environment variable was not modified in place for test %d expected %d, got %ld\n",
+               fprintf(stderr, "Environment variable was not modified in place for test %d expected %ld, got %ld\n",
                        num, strlen(fileData)+1, filestat.st_size);
                return -2;
            }
