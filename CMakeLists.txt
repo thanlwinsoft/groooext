@@ -28,7 +28,7 @@ set (graphiteooo_VERSION_MINOR 1)
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     # that the directory name contains the version as for a debian package
-    string(REGEX REPLACE "^openoffice.org-graphite_[0-9]+[.][0-9]+[.]([0-9]+)[.].*$" "\\2" HG_TAG_PATCH_VERSION ${PROJECT_SOURCE_DIR})
+    string(REGEX REPLACE "^openoffice.org-graphite_[0-9]+[.][0-9]+[.]([0-9]+)$" "\\2" HG_TAG_PATCH_VERSION ${PROJECT_SOURCE_DIR})
     set(graphiteooo_VERSION_PATCH ${HG_TAG_PATCH_VERSION})
     message("Version=${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}")
 else (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
