@@ -1,5 +1,5 @@
-openoffice.org-graphite (0.1.0) unstable; urgency=low
+openoffice.org-graphite (0.1.1-1) lucid; urgency=low
 
   * Initial release for testing
 
- -- Keith Stribley <devel@thanlwinsoft.org>  Fri, 14 May 2010 11:50:31 +0630
+ -- Keith Stribley <devel@thanlwinsoft.org>  Thu, 20 May 2010 22:38:31 +0700
