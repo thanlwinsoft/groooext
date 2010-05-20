@@ -28,9 +28,12 @@ set (graphiteooo_VERSION_MINOR 1)
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     # that the directory name contains the version as for a debian package
-    string(REGEX REPLACE "^openoffice.org-graphite_[0-9]+[.][0-9]+[.]([0-9]+)$" "\\2" HG_TAG_PATCH_VERSION ${PROJECT_SOURCE_DIR})
-    set(graphiteooo_VERSION_PATCH ${HG_TAG_PATCH_VERSION})
-    message("Version=${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}")
+    string(REGEX REPLACE ".*openoffice.org-graphite_[0-9]+[.][0-9]+[.]([0-9]+)$" "\\1" HG_PATCH_VERSION ${PROJECT_SOURCE_DIR})
+    if (${HG_PATCH_VERSION} MATCHES "[0-9]+")
+        set(graphiteooo_VERSION_PATCH ${HG_PATCH_VERSION})
+    else (${HG_PATCH_VERSION} MATCHES "[0-9]+")
+        message(FATAL_ERROR "Version=${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}")
+    endif (${HG_PATCH_VERSION} MATCHES "[0-9]+")
 else (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     # use the hg id number as the patch version
     execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION
