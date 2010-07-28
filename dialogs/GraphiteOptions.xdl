@@ -2,21 +2,21 @@
 <!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
 <dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="GraphiteOptions" dlg:left="109" dlg:top="58" dlg:width="260" dlg:height="180" dlg:help-text="&amp;2.GraphiteOptions.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;3.GraphiteOptions.Title" dlg:withtitlebar="false">
  <dlg:bulletinboard>
-  <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="5" dlg:top="10" dlg:width="130" dlg:height="115" dlg:help-text="&amp;4.GraphiteOptions.GraphiteFrameControl.HelpText">
+  <dlg:titledbox dlg:id="GraphiteFrameControl" dlg:tab-index="0" dlg:left="5" dlg:top="10" dlg:width="130" dlg:height="125" dlg:help-text="&amp;4.GraphiteOptions.GraphiteFrameControl.HelpText">
    <dlg:title dlg:value="&amp;5.GraphiteOptions.GraphiteFrameControl.Label"/>
   </dlg:titledbox>
   <dlg:checkbox dlg:id="EnableGraphiteCheckBox" dlg:tab-index="1" dlg:left="10" dlg:top="20" dlg:width="120" dlg:height="11" dlg:help-text="&amp;6.GraphiteOptions.EnableGraphiteCheckBox.HelpText" dlg:value="&amp;7.GraphiteOptions.EnableGraphiteCheckBox.Label" dlg:checked="false"/>
-  <dlg:text dlg:id="EnableGraphiteLabel" dlg:tab-index="2" dlg:left="10" dlg:top="35" dlg:width="120" dlg:height="73" dlg:help-text="&amp;8.GraphiteOptions.EnableGraphiteLabel.HelpText" dlg:value="&amp;9.GraphiteOptions.EnableGraphiteLabel.Label" dlg:multiline="true"/>
+  <dlg:text dlg:id="EnableGraphiteLabel" dlg:tab-index="2" dlg:left="10" dlg:top="35" dlg:width="120" dlg:height="85" dlg:help-text="&amp;8.GraphiteOptions.EnableGraphiteLabel.HelpText" dlg:value="&amp;9.GraphiteOptions.EnableGraphiteLabel.Label" dlg:multiline="true"/>
   <dlg:titledbox dlg:id="FrameInstalledGraphiteFonts" dlg:tab-index="3" dlg:left="140" dlg:top="10" dlg:width="115" dlg:height="165" dlg:help-text="&amp;10.GraphiteOptions.FrameInstalledGraphiteFonts.HelpText">
    <dlg:title dlg:value="&amp;11.GraphiteOptions.FrameInstalledGraphiteFonts.Label"/>
   </dlg:titledbox>
   <dlg:menulist dlg:id="GraphiteFontListBox" dlg:tab-index="4" dlg:left="145" dlg:top="20" dlg:width="105" dlg:height="150" dlg:help-text="&amp;12.GraphiteOptions.GraphiteFontListBox.HelpText"/>
-  <dlg:text dlg:id="GraphiteEnabledLabel" dlg:tab-index="5" dlg:left="11" dlg:top="110" dlg:width="118" dlg:height="11" dlg:help-text="&amp;13.GraphiteOptions.GraphiteEnabledLabel.HelpText" dlg:value="&amp;14.GraphiteOptions.GraphiteEnabledLabel.Label"/>
+  <dlg:text dlg:id="GraphiteEnabledLabel" dlg:tab-index="5" dlg:left="11" dlg:top="120" dlg:width="118" dlg:height="11" dlg:help-text="&amp;13.GraphiteOptions.GraphiteEnabledLabel.HelpText" dlg:value="&amp;14.GraphiteOptions.GraphiteEnabledLabel.Label"/>
   <dlg:scrollbar dlg:id="CacheScrollBar" dlg:tab-index="6" dlg:left="10" dlg:top="160" dlg:width="120" dlg:height="11" dlg:page="1" dlg:help-text="&amp;23.GraphiteOptions.CacheScrollBar.HelpText" dlg:pageincrement="1024" dlg:increment="512" dlg:curpos="2047" dlg:maxpos="12288" dlg:minpos="1023"/>
-  <dlg:titledbox dlg:id="CacheFrameControl" dlg:tab-index="8" dlg:left="5" dlg:top="130" dlg:width="130" dlg:height="45" dlg:help-text="&amp;26.GraphiteOptions.CacheFrameControl.HelpText">
+  <dlg:titledbox dlg:id="CacheFrameControl" dlg:tab-index="8" dlg:left="5" dlg:top="138" dlg:width="130" dlg:height="37" dlg:help-text="&amp;26.GraphiteOptions.CacheFrameControl.HelpText">
    <dlg:title dlg:value="&amp;27.GraphiteOptions.CacheFrameControl.Label"/>
   </dlg:titledbox>
-  <dlg:text dlg:id="CacheMinLabel" dlg:tab-index="7" dlg:left="9" dlg:top="145" dlg:width="25" dlg:height="11" dlg:help-text="&amp;28.GraphiteOptions.CacheMinLabel.HelpText" dlg:value="&amp;29.GraphiteOptions.CacheMinLabel.Label"/>
-  <dlg:text dlg:id="CacheMaxLabel" dlg:tab-index="9" dlg:left="98" dlg:top="145" dlg:width="32" dlg:height="11" dlg:help-text="&amp;32.GraphiteOptions.CacheMaxLabel.HelpText" dlg:value="&amp;33.GraphiteOptions.CacheMaxLabel.Label" dlg:align="right"/>
+  <dlg:text dlg:id="CacheMinLabel" dlg:tab-index="7" dlg:left="10" dlg:top="148" dlg:width="30" dlg:height="11" dlg:help-text="&amp;28.GraphiteOptions.CacheMinLabel.HelpText" dlg:value="&amp;29.GraphiteOptions.CacheMinLabel.Label"/>
+  <dlg:text dlg:id="CacheMaxLabel" dlg:tab-index="9" dlg:left="100" dlg:top="148" dlg:width="30" dlg:height="11" dlg:help-text="&amp;32.GraphiteOptions.CacheMaxLabel.HelpText" dlg:value="&amp;33.GraphiteOptions.CacheMaxLabel.Label" dlg:align="right"/>
  </dlg:bulletinboard>
 </dlg:window>
