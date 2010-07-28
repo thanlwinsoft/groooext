@@ -12,13 +12,14 @@
                       <value>org.sil.graphite.GraphiteOptions</value>
                     </prop>
                     <prop oor:name="Label">
-                      <value xml:lang="en-US">Graphite Font Options</value>
+                      <value xml:lang="en-US">Graphite Fonts</value>
+                      <value xml:lang="hu">Graphite beállítások</value>
                     </prop>
                     <prop oor:name="OptionsPage">
                       <value>%origin%/../../../../../dialogs/GraphiteOptions.xdl</value>
                     </prop>
                     <prop oor:name="EventHandlerService">
-                      <value>org.sil.graphite.DialogEventHandler</value>
+                      <value>org.sil.graphite.OptionsDialogEventHandler</value>
                     </prop>
                 </node>
             </node>

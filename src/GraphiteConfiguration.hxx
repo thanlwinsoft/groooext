@@ -33,6 +33,7 @@
 #include "cppuhelper/implementationentry.hxx"
 #include "cppuhelper/implbase1.hxx"
 #include "cppuhelper/queryinterface.hxx"
+#include "com/sun/star/lang/Locale.hpp"
 #include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/lang/XMultiServiceFactory.hpp"
@@ -47,9 +48,11 @@ namespace org { namespace sil { namespace graphite {
         public:
             GraphiteConfiguration(css::uno::Reference< css::uno::XComponentContext > const & context);
             css::uno::Reference< css::container::XNameAccess> & nameAccess() { return mNameAccess; };
+            const css::lang::Locale & locale() const { return mLocale; }
         private:
             css::uno::Reference< css::lang::XMultiServiceFactory > mConfigurationProvider;
             css::uno::Reference< css::container::XNameAccess> mNameAccess;
+            css::lang::Locale mLocale;
     };
 
 }}}

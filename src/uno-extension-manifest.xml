@@ -17,6 +17,8 @@
                        manifest:full-path="registry/data/org/openoffice/Office/ProtocolHandler.xcu"/>
   <manifest:file-entry manifest:media-type="application/vnd.sun.star.configuration-data"
                        manifest:full-path="registry/data/org/openoffice/Office/OptionsDialog.xcu"/>
+  <manifest:file-entry manifest:media-type="application/vnd.sun.star.configuration-data"
+                       manifest:full-path="registry/data/org/sil/graphite/GraphiteOptions.xcu"/>
   <manifest:file-entry manifest:media-type="application/vnd.sun.star.configuration-schema"
                        manifest:full-path="registry/schema/org/sil/graphite/GraphiteOptions.xcs"/>
 </manifest:manifest>

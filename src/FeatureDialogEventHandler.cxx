@@ -80,8 +80,9 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
                                                                               css::uno::Reference< css::frame::XModel > const & model,
                                                                             const ::rtl::OUString & location) :
     m_xContext(context), m_xFactory(context.get()->getServiceManager()), m_xModel(model),
-    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
-               css::uno::UNO_QUERY),
+    m_config(context),
+    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages"),
+                            m_config.locale()), css::uno::UNO_QUERY),
     m_extensionBase(location)
 {
 #ifdef GROOO_DEBUG
@@ -94,7 +95,7 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
 {
 #ifdef GROOO_DEBUG
     rtl::OString aMethodName;
-    MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, 128);
+    MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
     logMsg("FeatureDialogEventHandler callHandlerMethod(%s)\n", aMethodName.getStr());
 #endif
     // TODO: Exchange the default return implementation for "callHandlerMethod" !!!
@@ -152,9 +153,9 @@ void org::sil::graphite::FeatureDialogEventHandler::initFeatureMap(FontScript fo
         }
         catch (css::lang::IllegalArgumentException e)
         {
-            ::rtl::OString msg;
-            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
 #ifdef GROOO_DEBUG
+            ::rtl::OString msg;
+            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
             logMsg("initFeatureMap illegal feature %s\n", msg.getStr());
 #endif
         }
@@ -181,7 +182,7 @@ void org::sil::graphite::FeatureDialogEventHandler::initFeatureMap(FontScript fo
         catch (css::lang::IllegalArgumentException e)
         {
             ::rtl::OString msg;
-            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
+            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
 #ifdef GROOO_DEBUG
             logMsg("initFeatureMap illegal feature %s\n", msg.getStr());
 #endif
@@ -337,7 +338,7 @@ void org::sil::graphite::FeatureDialogEventHandler::setupTreeModel(
         for (int i = 0; i < styleFamilyNames.getLength(); i++)
         {
             ::rtl::OString familyName;
-            styleFamilyNames[i].convertToString(&familyName, RTL_TEXTENCODING_UTF8, 128);
+            styleFamilyNames[i].convertToString(&familyName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
             logMsg("StyleFamily: %s\n", familyName.getStr());
         }
 #endif
@@ -586,7 +587,7 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowOpened(const 
     {
 #ifdef GROOO_DEBUG
         rtl::OString msg;
-        e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+        e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         logMsg("UnknownPropertyException %s\n", msg.getStr());
 #endif
     }
@@ -594,7 +595,7 @@ void SAL_CALL org::sil::graphite::FeatureDialogEventHandler::windowOpened(const 
     {
 #ifdef GROOO_DEBUG
         rtl::OString msg;
-        e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+        e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         logMsg("Exception %s\n", msg.getStr());
 #endif
     }
@@ -718,10 +719,10 @@ void org::sil::graphite::FeatureDialogEventHandler::setFontNames(void)
 #ifdef GROOO_DEBUG
                 ::rtl::OString msg;
                 ::rtl::OString setName;
-                fontNameWithFeature.convertToString(&msg, RTL_TEXTENCODING_UTF8, msg.getLength());
+                fontNameWithFeature.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
                 css::uno::Any aSetName =
                     m_xTextProperties->getPropertyValue(FONT_PROPERTY_NAME[i]);
-                aSetName.get< ::rtl::OUString >().convertToString(&setName, RTL_TEXTENCODING_UTF8, 128);
+                aSetName.get< ::rtl::OUString >().convertToString(&setName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
                 css::beans::Property prop = m_xTextProperties->getPropertySetInfo()->
                     getPropertyByName(FONT_PROPERTY_NAME[i]);
                 logMsg("set font %d to %s requested %s updated style %d property has type %x\n",

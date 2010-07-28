@@ -27,6 +27,7 @@
 #define graphiteooo_hxx
 
 #include "com/sun/star/resource/XStringResourceWithLocation.hpp"
+#include "com/sun/star/lang/Locale.hpp"
 #include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XInterface.hpp"
 #include "com/sun/star/uno/XComponentContext.hpp"
@@ -37,6 +38,7 @@
 
 namespace org { namespace sil { namespace graphite {
     extern const char * SAL_DISABLE_GRAPHITE;
+    extern const char * SAL_GRAPHITE_CACHE_SIZE;
 
 	void printPropertyNames(::com::sun::star::uno::Reference< ::com::sun::star::beans::XPropertySet > propSet);
 
@@ -44,7 +46,7 @@ namespace org { namespace sil { namespace graphite {
 
     ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceWithLocation> getResource(
         ::com::sun::star::uno::Reference< ::com::sun::star::uno::XComponentContext > const & context,
-                    ::rtl::OUString basename);
+                    ::rtl::OUString basename, ::com::sun::star::lang::Locale locale);
     ::rtl::OUString getResourceString(
         ::com::sun::star::uno::Reference< ::com::sun::star::resource::XStringResourceResolver> resource,
                                       const char * resourceId);

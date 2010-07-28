@@ -7,6 +7,7 @@
             <prop oor:name="Title" oor:type="xs:string">
           <value/>
           <value xml:lang="en">Graphite Features...</value>
+          <value xml:lang="hu">Graphite tulajdonságok...</value>
         </prop>
         <prop oor:name="Target" oor:type="xs:string">
           <value>_self</value>
@@ -35,6 +36,7 @@
             <prop oor:name="Title" oor:type="xs:string">
               <value/>
               <value xml:lang="en">Graphite Options</value>
+              <value xml:lang="hu">Graphite beállítások</value>
             </prop>
           </node>
         </node>

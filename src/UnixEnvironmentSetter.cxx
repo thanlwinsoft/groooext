@@ -83,7 +83,7 @@ namespace org { namespace sil { namespace graphite {
             {
                 // found the variable
 #ifdef GROOO_DEBUG
-                printf("Existing value for %s found at %u\n", var, pos + (envPos - buffer));
+                printf("Existing value for %s found at %lu\n", var, pos + (envPos - buffer));
 #endif
                 // check that it isn't commented
                 bool commented = false;
@@ -132,7 +132,7 @@ namespace org { namespace sil { namespace graphite {
                     {
                         varEndPos = pos + (endOfLine - buffer);
 #ifdef GROOO_DEBUG
-                        printf("Found old value at %d-%d\n", varPos, varEndPos);
+                        printf("Found old value at %lu-%lu\n", varPos, varEndPos);
 #endif
                     }
                 }
@@ -158,7 +158,7 @@ namespace org { namespace sil { namespace graphite {
                 assert(buffer[0] == buffer[bytesRead-overlap]);
                 buffer[overlap] = '\0';
 #ifdef GROOO_DEBUG
-                printf("overlap=%d %s\n", overlap, buffer);
+                printf("overlap=%lu %s\n", overlap, buffer);
 #endif
             }
             pos += bytesRead - overlap;

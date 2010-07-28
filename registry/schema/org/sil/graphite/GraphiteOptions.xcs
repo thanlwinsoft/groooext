@@ -9,21 +9,23 @@
         <author>Keith Stribley</author>
         <desc>Contains the options data used for the Graphite OpenOffice extension.</desc>
     </info>
-    <templates>
-        <group oor:name="Leaf">
-            <info>
-                <desc>Graphite Options</desc>
-            </info>
-        </group>
-    </templates>
+    <templates/>
     <component>
         <group oor:name="Leaves">
-            <group oor:name="Graphite" type="Leaf">
+            <group oor:name="Graphite">
+                <prop oor:name="cacheSize" oor:type="xs:int">
+                    <info>
+                        <desc>Size of the Graphite Segment Cache</desc>
+                    </info>
+                    <value>2047</value>
+                </prop>
                 <prop oor:name="graphiteEnabled" oor:type="xs:boolean">
+                    <info>
+                        <desc>Flag to control whether Graphite is enabled</desc>
+                    </info>
                    <value>1</value>
                 </prop>
             </group>
         </group>
     </component>
 </oor:component-schema>
-

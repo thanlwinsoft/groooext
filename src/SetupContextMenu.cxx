@@ -89,6 +89,7 @@
 #include "SetupContextMenu.hxx"
 #include "FeatureDialogEventHandler.hxx"
 #include "GraphiteFontInfo.hxx"
+#include "GraphiteConfiguration.hxx"
 
 namespace css = ::com::sun::star;
 
@@ -128,14 +129,15 @@ private:
 
     css::uno::Reference< css::frame::XFrame > m_xFrame;
     css::uno::Reference< css::uno::XComponentContext > m_xContext;
+    GraphiteConfiguration m_config;
     css::uno::Reference< css::frame::XController > m_xController;
     css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
 };
 
 org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css::uno::XComponentContext > const & context) :
-    m_xContext(context),
-    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages")),
-                css::uno::UNO_QUERY)
+    m_xContext(context), m_config(context),
+    m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages"),
+                            m_config.locale()), css::uno::UNO_QUERY)
 {
 #ifdef GROOO_DEBUG
     logMsg("SetupContextMenu constructor\n");

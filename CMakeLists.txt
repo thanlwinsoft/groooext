@@ -141,14 +141,14 @@ add_library(graphiteooo
     src/groooDebug.cxx src/groooDebug.hxx
     src/UnixEnvironmentSetter.cxx src/UnixEnvironmentSetter.hxx
     src/GraphiteAddOn.cxx src/GraphiteAddOn.hxx
-    src/DialogEventHandler.cxx src/DialogEventHandler.hxx
+    src/OptionsDialogEventHandler.cxx src/OptionsDialogEventHandler.hxx
     src/FeatureDialogEventHandler.cxx src/FeatureDialogEventHandler.hxx
     src/GraphiteFontInfo.cxx src/GraphiteFontInfo.hxx
     src/GraphiteConfiguration.cxx src/GraphiteConfiguration.hxx
     src/SetupContextMenu.cxx src/SetupContextMenu.hxx)
 
 set_source_files_properties(src/graphiteooo.hxx src/UnixEnvironmentSetter.hxx src/GraphiteAddOn.hxx
-    src/DialogEventHandler.hxx src/FeatureDialogEventHandler.hxx src/GraphiteFontInfo.hxx
+    src/OptionsDialogEventHandler.hxx src/FeatureDialogEventHandler.hxx src/GraphiteFontInfo.hxx
     src/GraphiteConfiguration.hxx src/SetupContextMenu.hxx PROPERTIES HEADER_FILE_ONLY true)
 
 # the environment test is only relevant on Linux
@@ -200,19 +200,26 @@ target_link_libraries(test_graphitefontinfo ${FREETYPE_LIBRARIES}
 target_link_libraries(test_graphitefontinfo debug ${GR_DEBUG_LIBRARY})
 target_link_libraries(test_graphitefontinfo optimized ${GR_RELEASE_LIBRARY})
 
+file(GLOB L10N_FILES RELATIVE ${PROJECT_SOURCE_DIR} dialogs/*.properties l10n/*.txt)
+foreach (l10nFile ${L10N_FILES} )
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${PROJECT_SOURCE_DIR}/${l10nFile}
+            ${PROJECT_BINARY_DIR}/${l10nFile})
+endforeach (l10nFile ${L10N_FILES})
 
-
-set(ZIP_FILES dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions_en_US.properties dialogs/GraphiteOptions.xdl
-    dialogs/GraphiteFeatures_en_US.default dialogs/GraphiteFeatures_en_US.properties dialogs/GraphiteFeatures.xdl
-    dialogs/GraphiteMessages_en_US.properties
-    registry/schema/org/sil/graphite/GraphiteOptions.xcs registry/data/org/openoffice/Office/Addons.xcu
+set(ZIP_FILES
+    dialogs/GraphiteOptions_en_US.default dialogs/GraphiteOptions.xdl
+    dialogs/GraphiteFeatures_en_US.default dialogs/GraphiteFeatures.xdl
+    ${L10N_FILES}
+    registry/schema/org/sil/graphite/GraphiteOptions.xcs
+    registry/data/org/openoffice/Office/Addons.xcu
     registry/data/org/openoffice/Office/Jobs.xcu
-    registry/data/org/openoffice/Office/OptionsDialog.xcu registry/data/org/openoffice/Office/ProtocolHandler.xcu
+    registry/data/org/openoffice/Office/OptionsDialog.xcu
+    registry/data/org/openoffice/Office/ProtocolHandler.xcu
+    registry/data/org/sil/graphite/GraphiteOptions.xcu
     META-INF/manifest.xml description.xml icons/enabled.png icons/disabled.png
     graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX}
     graphiteooo.pdb
-    l10n/license_en-US.txt
-    l10n/description_en-US.txt
     ${PLATFORM_LIBRARIES}
 )
 
@@ -231,18 +238,12 @@ add_custom_target(copy_files
         ${PROJECT_BINARY_DIR}/icons/disabled.png
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions.xdl
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteOptions.xdl
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions_en_US.properties 
-        ${PROJECT_BINARY_DIR}/dialogs/GraphiteOptions_en_US.properties
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteOptions_en_US.default
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteOptions_en_US.default
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteFeatures.xdl
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteFeatures.xdl
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteFeatures_en_US.properties 
-        ${PROJECT_BINARY_DIR}/dialogs/GraphiteFeatures_en_US.properties
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteFeatures_en_US.default
         ${PROJECT_BINARY_DIR}/dialogs/GraphiteFeatures_en_US.default
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/dialogs/GraphiteMessages_en_US.properties
-        ${PROJECT_BINARY_DIR}/dialogs/GraphiteMessages_en_US.properties
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/Addons.xcu
         ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/Addons.xcu
@@ -255,6 +256,9 @@ add_custom_target(copy_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PROJECT_SOURCE_DIR}/registry/data/org/openoffice/Office/OptionsDialog.xcu
         ${PROJECT_BINARY_DIR}/registry/data/org/openoffice/Office/OptionsDialog.xcu
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/registry/data/org/sil/graphite/GraphiteOptions.xcu
+        ${PROJECT_BINARY_DIR}/registry/data/org/sil/graphite/GraphiteOptions.xcu
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PROJECT_SOURCE_DIR}/registry/schema/org/sil/graphite/GraphiteOptions.xcs
         ${PROJECT_BINARY_DIR}/registry/schema/org/sil/graphite/GraphiteOptions.xcs

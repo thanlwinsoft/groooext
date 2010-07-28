@@ -26,7 +26,7 @@
 #ifndef dialogeventhandler_hxx
 #define dialogeventhandler_hxx
 // component helper namespace
-namespace org { namespace sil { namespace graphite { namespace dialogeventhandler {
+namespace org { namespace sil { namespace graphite { namespace optionsdialogeventhandler {
 
 namespace css = ::com::sun::star;
 

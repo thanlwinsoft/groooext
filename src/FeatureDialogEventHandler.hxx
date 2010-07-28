@@ -47,6 +47,8 @@
 #include "com/sun/star/frame/XModel.hpp"
 #include "com/sun/star/frame/XController.hpp"
 
+#include "GraphiteConfiguration.hxx"
+
 namespace gr { class Font; }
 
 // component helper namespace
@@ -135,16 +137,17 @@ private:
     css::uno::Reference< css::lang::XMultiComponentFactory > m_xFactory;
     css::uno::Reference< css::frame::XModel > m_xModel;
     css::uno::Reference< css::frame::XController > m_xController;
-	css::uno::Reference< css::view::XSelectionSupplier > m_xSelectionSupplier;
+    css::uno::Reference< css::view::XSelectionSupplier > m_xSelectionSupplier;
     css::uno::Reference<css::awt::tree::XTreeControl> m_xTree;
     css::uno::Reference<css::awt::XCheckBox> m_xUpdateStyle;
     css::uno::Reference< css::beans::XPropertySet> m_xTextProperties;
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
+    GraphiteConfiguration m_config;
     css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
     ::rtl::OUString m_extensionBase;
     std::map<sal_uInt32, sal_Int32> m_featureSettings[NUM_SCRIPTS];
     ::rtl::OUString m_fontNames[NUM_SCRIPTS];
-	::rtl::OUString m_featureNames[NUM_SCRIPTS];
+    ::rtl::OUString m_featureNames[NUM_SCRIPTS];
 };
 
 }}}

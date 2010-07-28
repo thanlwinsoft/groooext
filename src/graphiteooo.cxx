@@ -28,6 +28,7 @@
 #include "sal/config.h"
 #include "uno/lbnames.h"
 #include "rtl/string.hxx"
+#include "rtl/ustring.hxx"
 #include "cppuhelper/implementationentry.hxx"
 #include "com/sun/star/chart/XChartDocument.hpp"
 #include "com/sun/star/chart2/XAxis.hpp"
@@ -49,6 +50,7 @@
 #include "com/sun/star/table/XCellRange.hpp"
 #include "com/sun/star/table/XCellCursor.hpp"
 #include "com/sun/star/lang/XComponent.hpp"
+#include "com/sun/star/resource/XLocale.hpp"
 #include "com/sun/star/lang/XServiceInfo.hpp"
 #include "com/sun/star/drawing/XShapes.hpp"
 #include "com/sun/star/drawing/XShape.hpp"
@@ -65,11 +67,12 @@
 #include "graphiteooo.hxx"
 #include "GraphiteAddOn.hxx"
 
-#include "DialogEventHandler.hxx"
+#include "OptionsDialogEventHandler.hxx"
 #include "FeatureDialogEventHandler.hxx"
 #include "SetupContextMenu.hxx"
 
 const char * ::org::sil::graphite::SAL_DISABLE_GRAPHITE = "SAL_DISABLE_GRAPHITE";
+const char * ::org::sil::graphite::SAL_GRAPHITE_CACHE_SIZE = "SAL_GRAPHITE_CACHE_SIZE";
 
 namespace css = ::com::sun::star;
 namespace osg = ::org::sil::graphite;
@@ -361,17 +364,24 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
 css::uno::Reference< css::resource::XStringResourceWithLocation>
 osg::getResource(
         css::uno::Reference< css::uno::XComponentContext > const & context,
-                    ::rtl::OUString basename)
+                    ::rtl::OUString basename, css::lang::Locale locale)
 {
     css::uno::Reference< css::deployment::XPackageInformationProvider >
                     xInfoProvider( css::deployment::PackageInformationProvider::get( context) );
     rtl::OUString sLocation = xInfoProvider->getPackageLocation(
         rtl::OUString::createFromAscii( "org.sil.graphite.GraphiteOptions" ) );
     rtl::OString aLocation;
-    sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, 128);
+    sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
     rtl::OUString dialogDir = rtl::OUString::createFromAscii("/dialogs/");
     rtl::OUString resUrl = sLocation + dialogDir;
-    ::com::sun::star::lang::Locale locale;
+    css::uno::Reference< css::resource::XLocale> xLocale(context, css::uno::UNO_QUERY);
+#ifdef GROOO_DEBUG
+    ::rtl::OString aLang;
+    ::rtl::OString aCountry;
+    locale.Language.convertToString(&aLang, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
+    locale.Country.convertToString(&aCountry, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
+    logMsg("graphiteooo locale %s-%s\n", aLang.getStr(), aCountry.getStr());
+#endif
     // null handler
     ::css::uno::Reference<css::task::XInteractionHandler> xInteractionHandler;
     return css::resource::StringResourceWithLocation::create(context,
@@ -404,9 +414,9 @@ static ::cppu::ImplementationEntry const entries[] = {
       &org::sil::graphite::graphiteaddon::_getImplementationName,
       &org::sil::graphite::graphiteaddon::_getSupportedServiceNames,
       &::cppu::createSingleComponentFactory, 0, 0 },
-    { &org::sil::graphite::dialogeventhandler::_create,
-      &org::sil::graphite::dialogeventhandler::_getImplementationName,
-      &org::sil::graphite::dialogeventhandler::_getSupportedServiceNames,
+    { &org::sil::graphite::optionsdialogeventhandler::_create,
+      &org::sil::graphite::optionsdialogeventhandler::_getImplementationName,
+      &org::sil::graphite::optionsdialogeventhandler::_getSupportedServiceNames,
       &::cppu::createSingleComponentFactory, 0, 0 },
     { &org::sil::graphite::setupcontextmenu::_create,
       &org::sil::graphite::setupcontextmenu::_getImplementationName,
