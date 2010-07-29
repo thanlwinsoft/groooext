@@ -85,7 +85,7 @@ void osg::printPropertyNames(css::uno::Reference<css::beans::XPropertySet > prop
     {
         ::rtl::OString propName;
         ::rtl::OString propValue;
-        properties[i].Name.convertToString(&propName, RTL_TEXTENCODING_UTF8, 128);
+        properties[i].Name.convertToString(&propName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         try
         {
             ::css::uno::Any aValue = propSet.get()->getPropertyValue(properties[i].Name);
@@ -124,7 +124,7 @@ void osg::printServiceNames(::com::sun::star::uno::Reference< ::com::sun::star::
             xServiceInfo->getSupportedServiceNames();
         for (int i = 0; i < serviceNames.getLength(); i++)
         {
-            serviceNames[i].convertToString(&aServiceName, RTL_TEXTENCODING_UTF8, 128);
+            serviceNames[i].convertToString(&aServiceName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
             osg::logMsg("service: %s\n", aServiceName.getStr());
         }
     }
@@ -269,7 +269,7 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
         aSelection = xSelection.get()->getSelection();
 #ifdef GROOO_DEBUG
         ::rtl::OString aTypeName;
-        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, 128);
+        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         logMsg("Selection type: %s\n", aTypeName.getStr());
 #endif
 
@@ -321,7 +321,7 @@ osg::getTextPropertiesFromModel(css::uno::Reference< css::frame::XModel > xModel
             ::rtl::OUString uSelection(aSelection.get< ::rtl::OUString>());
 #ifdef GROOO_DEBUG
             ::rtl::OString aSelectionText;
-            uSelection.convertToString(&aSelectionText, RTL_TEXTENCODING_UTF8, 128);
+            uSelection.convertToString(&aSelectionText, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
             logMsg("Selection text: %s\n", aSelectionText.getStr());
             printServiceNames(xController);
             logMsg("chart model?\n");

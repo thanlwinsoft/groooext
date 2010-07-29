@@ -48,6 +48,7 @@
 #include "com/sun/star/frame/XController.hpp"
 
 #include "GraphiteConfiguration.hxx"
+#include "locale2lcid.hxx"
 
 namespace gr { class Font; }
 
@@ -143,6 +144,7 @@ private:
     css::uno::Reference< css::beans::XPropertySet> m_xTextProperties;
     css::uno::Reference< css::beans::XPropertySet> m_xStyleTextProperties;
     GraphiteConfiguration m_config;
+    Locale2Lang m_locale2Lang;
     css::uno::Reference< css::resource::XStringResourceResolver> m_xResource;
     ::rtl::OUString m_extensionBase;
     std::map<sal_uInt32, sal_Int32> m_featureSettings[NUM_SCRIPTS];

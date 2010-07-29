@@ -17,10 +17,12 @@
     <display-name>
         <name lang="en">Graphite Font Options</name>
         <name lang="hu">Graphite betűbeállítások</name>
+        <name lang="my-MM">Graphite ဖောင့်ရွေးပိုင်ခွင့်များ</name>
     </display-name>
     <extension-description>
         <src lang="en-US" xlink:href="l10n/description_en-US.txt"/>
-        <src lang="hu-HU" xlink:href="l10n/description_hu-HU.txt"/>
+        <src lang="hu" xlink:href="l10n/description_hu.txt"/>
+        <src lang="my-MM" xlink:href="l10n/description_my-MM.txt"/>
     </extension-description>
     <publisher>
         <name lang="en" xlink:href="http://www.thanlwinsoft.org/GraphiteOOoExt/">ThanLwinSoft.org</name>

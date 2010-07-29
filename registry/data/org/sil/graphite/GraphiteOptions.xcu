@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:component-data xmlns:install="http://openoffice.org/2004/installation" xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oor:name="GraphiteOptions" oor:package="org.sil.graphite">
+    <node oor:name="Leaves">
+        <prop oor:name="graphiteEnabled">
+            <value>true</value>
+        </prop>
+        <prop oor:name="cacheSize">
+            <value>2047</value>
+        </prop>
+    </node>
+</oor:component-data>
+

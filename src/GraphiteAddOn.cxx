@@ -35,7 +35,7 @@
 #include "rtl/string.hxx"
 #include "cppu/macros.hxx"
 #include "cppuhelper/factory.hxx"
-#include "cppuhelper/implbase5.hxx"
+#include "cppuhelper/implbase4.hxx"
 #include "com/sun/star/awt/XControl.hpp"
 #include "com/sun/star/awt/XControlModel.hpp"
 #include "com/sun/star/awt/XTopWindow.hpp"
@@ -63,12 +63,11 @@ namespace org { namespace sil { namespace graphite { class GraphiteAddOn; } } }
 namespace css = ::com::sun::star;
 
 class org::sil::graphite::GraphiteAddOn:
-    public ::cppu::WeakImplHelper5<
+    public ::cppu::WeakImplHelper4<
         css::lang::XInitialization,
         css::frame::XDispatch,
         css::lang::XServiceInfo,
-        css::frame::XDispatchProvider,
-        css::lang::XLocalizable>
+        css::frame::XDispatchProvider>
 {
 public:
     explicit GraphiteAddOn(css::uno::Reference< css::uno::XComponentContext > const & context);
@@ -89,10 +88,6 @@ public:
     // ::com::sun::star::frame::XDispatchProvider:
     virtual css::uno::Reference< css::frame::XDispatch > SAL_CALL queryDispatch(const css::util::URL & URL, const ::rtl::OUString & TargetFrameName, ::sal_Int32 SearchFlags) throw (css::uno::RuntimeException);
     virtual css::uno::Sequence< css::uno::Reference< css::frame::XDispatch > > SAL_CALL queryDispatches(const css::uno::Sequence< css::frame::DispatchDescriptor > & Requests) throw (css::uno::RuntimeException);
-
-    // ::com::sun::star::lang::XLocalizable
-    virtual void SAL_CALL setLocale( const ::com::sun::star::lang::Locale& eLocale ) throw (::com::sun::star::uno::RuntimeException);
-    virtual ::com::sun::star::lang::Locale SAL_CALL getLocale(  ) throw (::com::sun::star::uno::RuntimeException);
 
 private:
     GraphiteAddOn(const org::sil::graphite::GraphiteAddOn &); // not defined
@@ -151,7 +146,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
                 rtl::OUString sLocation = xInfoProvider->getPackageLocation(
                     rtl::OUString::createFromAscii( "org.sil.graphite.GraphiteOptions" ) );
                 rtl::OString aLocation;
-                sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, 128);
+                sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
 #ifdef GROOO_DEBUG
                 logMsg("AddOn location %s\n", aLocation.getStr());
 #endif
@@ -204,7 +199,7 @@ void SAL_CALL org::sil::graphite::GraphiteAddOn::dispatch( const css::util::URL&
             catch (css::uno::RuntimeException e)
             {
                 rtl::OString msg;
-                e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+                e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
 #ifdef GROOO_DEBUG
                 logMsg("Exception %s\n", msg.getStr());
 #endif
@@ -296,20 +291,6 @@ css::uno::Sequence< css::uno::Reference< css::frame::XDispatch > > SAL_CALL org:
     }
 
     return lDispatcher;
-}
-
-void SAL_CALL org::sil::graphite::GraphiteAddOn::setLocale( const ::com::sun::star::lang::Locale& eLocale ) throw (::com::sun::star::uno::RuntimeException)
-{
-    m_locale = eLocale;
-#ifdef GROOO_DEBUG
-    ::rtl::OString aLang;
-    eLocale.Language.convertToString(&aLang, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
-    logMsg("GraphiteAddOn::setLocale %s\n", aLang.getStr());
-#endif
-}
-::com::sun::star::lang::Locale SAL_CALL org::sil::graphite::GraphiteAddOn::getLocale(  ) throw (::com::sun::star::uno::RuntimeException)
-{
-    return m_locale;
 }
 
 

@@ -184,7 +184,7 @@ org::sil::graphite::SetupContextMenu::SetupContextMenu(css::uno::Reference< css:
     {
         ::rtl::OString asciiEnvType;
         ::rtl::OUString environmentType = envType.get< ::rtl::OUString >();
-        environmentType.convertToString(&asciiEnvType, RTL_TEXTENCODING_UTF8, 128);
+        environmentType.convertToString(&asciiEnvType, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         logMsg("Job env type %s\n", asciiEnvType.getStr());
     }
     if (envFrame.hasValue())
@@ -395,12 +395,12 @@ org::sil::graphite::SetupContextMenu::selectionChanged( const ::com::sun::star::
             if (xReflection.is())
             {
                 ::rtl::OString typeName;
-                xReflection->getType(aSelection)->getName().convertToString(&typeName, RTL_TEXTENCODING_UTF8, 128);
+                xReflection->getType(aSelection)->getName().convertToString(&typeName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
                 logMsg("Selection type=%s\n", typeName.getStr());
             }
         }
 
-        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, 128);
+        aSelection.getValueTypeName().convertToString(&aTypeName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
         logMsg("selectionChanged %s\n", aTypeName.getStr());
         if (aSelection.has<css::uno::Reference<css::uno::XInterface> >())
         {

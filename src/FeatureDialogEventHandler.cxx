@@ -98,11 +98,6 @@ org::sil::graphite::FeatureDialogEventHandler::FeatureDialogEventHandler(css::un
     MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
     logMsg("FeatureDialogEventHandler callHandlerMethod(%s)\n", aMethodName.getStr());
 #endif
-    // TODO: Exchange the default return implementation for "callHandlerMethod" !!!
-    // Exchange the default return implementation.
-    // NOTE: Default initialized polymorphic structs can cause problems because of
-    // missing default initialization of primitive types of some C++ compilers or
-    // different Any initialization in Java and C++ polymorphic structs.
     return sal_False;
 }
 
@@ -233,7 +228,7 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
             gr::lgid en_US(0x0409);
             std::pair<gr::FeatureIterator, gr::FeatureIterator>iFeats = grFont->getFeatures();
             std::pair<gr::FeatLabelLangIterator, gr::FeatLabelLangIterator > iFeatLangs = grFont->getFeatureLabelLanguages();
-            gr::lgid lang = en_US;
+            gr::lgid lang = m_locale2Lang.getMsId(m_config.locale().Language, m_config.locale().Country, m_config.locale().Variant);
             gr::FeatureIterator iFeat = iFeats.first;
 #ifdef GROOO_DEBUG
             logMsg("Loaded font with %d features\n", iFeats.second - iFeats.first);
@@ -241,60 +236,89 @@ void org::sil::graphite::FeatureDialogEventHandler::addFontFeatures(
             while (iFeat != iFeats.second)
             {
                 gr::utf16 featLabel[128];
-                bool hasLabel = grFont->getFeatureLabel(iFeat, en_US, featLabel);
-                // if we don't have English, randomly pick the first language for now
-                if (!hasLabel && (iFeatLangs.first != iFeatLangs.second))
+                featLabel[0] = 0;
+                bool hasLabel = grFont->getFeatureLabel(iFeat, lang, featLabel);
+                if (!hasLabel)
                 {
-                    hasLabel = grFont->getFeatureLabel(iFeat, *(iFeatLangs.first), featLabel);
-                    lang = *(iFeatLangs.first);
+                    // look for an entry with same language, but a different country
+                    gr::FeatLabelLangIterator iFeatLang = iFeatLangs.first;
+                    while (iFeatLang != iFeatLangs.second)
+                    {
+                        const IsoLangEntry * entry = m_locale2Lang.findEntryById(*iFeatLang);
+                        if (entry && m_config.locale().Language.compareToAscii(entry->maLangStr) == 0)
+                        {
+                            lang = *iFeatLang;
+                            hasLabel = grFont->getFeatureLabel(iFeat, lang, featLabel);
+                            break;
+                        }
+                        ++iFeatLang;
+                    }
+                    // try English
+                    if (!hasLabel && grFont->getFeatureLabel(iFeat, en_US, featLabel))
+                    {
+                        hasLabel = true;
+                        lang = en_US;
+                    }
+                    // if we don't have English, randomly pick the first language
+                    if (!hasLabel && (iFeatLangs.first != iFeatLangs.second))
+                    {
+                        hasLabel = grFont->getFeatureLabel(iFeat, *(iFeatLangs.first), featLabel);
+                        lang = *(iFeatLangs.first);
 #ifdef GROOO_DEBUG
-					logMsg("Feature label for en_US not found using lang %x\n", lang);
+                        logMsg("Feature label not found for requested language using %x\n", lang);
 #endif
+                    }
                 }
                 ::rtl::OUString featName(reinterpret_cast<sal_Unicode*>(featLabel));
-                if (hasLabel)
+                if (!hasLabel)
                 {
-                    css::uno::Reference<css::awt::tree::XMutableTreeNode> featNode = xMutableDataModel.get()->createNode(css::uno::Any(featName), sal_False);
-                    featNode.get()->setDataValue(css::uno::Any(static_cast<sal_uInt32>(*iFeat)));
-                    css::uno::Reference<css::awt::tree::XTreeNode> xFeatTreeNode(featNode, css::uno::UNO_QUERY);
-                    fontNode.get()->appendChild(featNode);
-                    m_xTree.get()->makeNodeVisible(xFeatTreeNode);
+                    featName = grInfo.featId2OUString(*iFeat);
+                }
+                css::uno::Reference<css::awt::tree::XMutableTreeNode> featNode = xMutableDataModel.get()->createNode(css::uno::Any(featName), sal_False);
+                featNode.get()->setDataValue(css::uno::Any(static_cast<sal_uInt32>(*iFeat)));
+                css::uno::Reference<css::awt::tree::XTreeNode> xFeatTreeNode(featNode, css::uno::UNO_QUERY);
+                fontNode.get()->appendChild(featNode);
+                m_xTree.get()->makeNodeVisible(xFeatTreeNode);
 
-                    std::pair<gr::FeatureSettingIterator, gr::FeatureSettingIterator > iSettings = grFont->getFeatureSettings(iFeat);
-                    gr::FeatureSettingIterator iSetting = iSettings.first;
-                    gr::FeatureSettingIterator defaultValue = grFont->getDefaultFeatureValue(iFeat);
-                    sal_Int32 value = *defaultValue;
-                    if (m_featureSettings[fontScript].find(*iFeat) != m_featureSettings[fontScript].end())
-                        value = m_featureSettings[fontScript][*iFeat];
+                std::pair<gr::FeatureSettingIterator, gr::FeatureSettingIterator > iSettings = grFont->getFeatureSettings(iFeat);
+                gr::FeatureSettingIterator iSetting = iSettings.first;
+                gr::FeatureSettingIterator defaultValue = grFont->getDefaultFeatureValue(iFeat);
+                sal_Int32 value = *defaultValue;
+                if (m_featureSettings[fontScript].find(*iFeat) != m_featureSettings[fontScript].end())
+                    value = m_featureSettings[fontScript][*iFeat];
 #ifdef GROOO_DEBUG
-                    logMsg("Feature %d has %d settings\n", iFeat - iFeats.first, iSettings.second - iSettings.first);
+                logMsg("Feature %d has %d settings\n", iFeat - iFeats.first, iSettings.second - iSettings.first);
 #endif
-                    while (iSetting != iSettings.second)
+                while (iSetting != iSettings.second)
+                {
+                    featLabel[0] = 0;
+                    hasLabel = grFont->getFeatureSettingLabel(iSetting, lang, featLabel);
+                    assert(sizeof(gr::utf16) == sizeof(sal_Unicode));
+                    ::rtl::OUString settingName(reinterpret_cast<sal_Unicode*>(featLabel));
+                    if (!hasLabel)
                     {
-                        hasLabel = grFont->getFeatureSettingLabel(iSetting, lang, featLabel);
-						assert(sizeof(gr::utf16) == sizeof(sal_Unicode));
-                        ::rtl::OUString settingName(reinterpret_cast<sal_Unicode*>(featLabel));
-                        if (*iSetting == *defaultValue)
-                            settingName += defaultLabel;
-                        css::uno::Reference<css::awt::tree::XMutableTreeNode> settingNode = xMutableDataModel.get()->createNode(css::uno::Any(settingName), sal_False);
-                        settingNode.get()->setDataValue(css::uno::Any(static_cast<sal_Int32>(*iSetting)));
-                        featNode.get()->appendChild(settingNode);
-                        if (*iSetting == value)
-                        {
-                            settingNode.get()->setNodeGraphicURL(m_extensionBase + ENABLED_ICON);
-                            // make non-default settings visible
-                            if (value != *defaultValue)
-                            {
-                                css::uno::Reference<css::awt::tree::XTreeNode> xFeatSettingTreeNode(settingNode, css::uno::UNO_QUERY);
-                                m_xTree.get()->makeNodeVisible(xFeatSettingTreeNode);
-                            }
-                        }
-                        else
-                        {
-                            settingNode.get()->setNodeGraphicURL(m_extensionBase + DISABLED_ICON);
-                        }
-                        ++iSetting;
+                        settingName = grInfo.featSetting2OUString(*iSetting);
                     }
+                    if (*iSetting == *defaultValue)
+                        settingName += defaultLabel;
+                    css::uno::Reference<css::awt::tree::XMutableTreeNode> settingNode = xMutableDataModel.get()->createNode(css::uno::Any(settingName), sal_False);
+                    settingNode.get()->setDataValue(css::uno::Any(static_cast<sal_Int32>(*iSetting)));
+                    featNode.get()->appendChild(settingNode);
+                    if (*iSetting == value)
+                    {
+                        settingNode.get()->setNodeGraphicURL(m_extensionBase + ENABLED_ICON);
+                        // make non-default settings visible
+                        if (value != *defaultValue)
+                        {
+                            css::uno::Reference<css::awt::tree::XTreeNode> xFeatSettingTreeNode(settingNode, css::uno::UNO_QUERY);
+                            m_xTree.get()->makeNodeVisible(xFeatSettingTreeNode);
+                        }
+                    }
+                    else
+                    {
+                        settingNode.get()->setNodeGraphicURL(m_extensionBase + DISABLED_ICON);
+                    }
+                    ++iSetting;
                 }
                 ++iFeat;
             }

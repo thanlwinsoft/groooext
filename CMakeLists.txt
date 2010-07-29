@@ -84,6 +84,7 @@ find_path(OO_SDK_URE_BIN version.ini versionrc
 find_program(UNOPKG unopkg PATHS ENV OFFICE_PROGRAM_PATH /usr/bin
     DOC "OpenOffice.org Extension Manager")
 find_program(ZIP zip)
+find_program(NATIVE2ASCII native2ascii)
 
 include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
 
@@ -171,6 +172,11 @@ add_test(NAME test_graphiteooouno COMMAND "$<TARGET_FILE:test_graphiteooouno>"
     ENVIRONMENT PATH=${OO_SDK_URE_BIN} )
 target_link_libraries(test_graphiteooouno graphiteooo)
 
+add_executable(test_locale2lcid src/test_locale2lcid.cxx)
+add_test(NAME test_locale2lcid COMMAND "$<TARGET_FILE:test_locale2lcid>"
+    ENVIRONMENT PATH=${OO_SDK_URE_BIN} )
+target_link_libraries(test_locale2lcid ${OO_SDK_UNO_SAL})
+
 enable_testing()
 
 # just use one sample IDL header since we compile them in one go
@@ -202,9 +208,12 @@ target_link_libraries(test_graphitefontinfo optimized ${GR_RELEASE_LIBRARY})
 
 file(GLOB L10N_FILES RELATIVE ${PROJECT_SOURCE_DIR} dialogs/*.properties l10n/*.txt)
 foreach (l10nFile ${L10N_FILES} )
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    add_custom_command(OUTPUT ${PROJECT_BINARY_DIR}/${l10nFile}
+            COMMAND ${NATIVE2ASCII} -encoding UTF-8
             ${PROJECT_SOURCE_DIR}/${l10nFile}
-            ${PROJECT_BINARY_DIR}/${l10nFile})
+            ${PROJECT_BINARY_DIR}/${l10nFile}
+            DEPENDS ${PROJECT_SOURCE_DIR}/${l10nFile})
+    set(L10N_ESCAPED_FILES ${L10N_ESCAPED_FILES} ${PROJECT_BINARY_DIR}/${l10nFile})
 endforeach (l10nFile ${L10N_FILES})
 
 set(ZIP_FILES
@@ -296,7 +305,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX})
 
 add_custom_target(ooextension ALL COMMAND ${ZIP} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt ${ZIP_FILES}
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR} DEPENDS ${L10N_ESCAPED_FILES})
 
 # clean the headers generated from IDL
 add_custom_target(idlclean
@@ -311,6 +320,19 @@ add_custom_target(install
 add_custom_target(uninstall
     COMMAND ${UNOPKG} remove --shared org.sil.graphite.GraphiteOptions
     COMMENT install the extension system wide - requires admin permissions)
+
+add_custom_target(install_user
+    COMMAND ${UNOPKG} add ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMENT install the extension system wide - requires admin permissions)
+
+add_custom_target(uninstall_user
+    COMMAND ${UNOPKG} remove org.sil.graphite.GraphiteOptions
+    COMMENT install the extension system wide - requires admin permissions)
+
+add_custom_target(reinstall_user
+    COMMAND ${UNOPKG} remove org.sil.graphite.GraphiteOptions
+    COMMAND ${UNOPKG} add ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMENT reinstall the extension for current user)
 
 add_dependencies(copy_files graphiteooo)
 add_dependencies(ooextension copy_files)

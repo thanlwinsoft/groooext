@@ -14,6 +14,7 @@
                     <prop oor:name="Label">
                       <value xml:lang="en-US">Graphite Fonts</value>
                       <value xml:lang="hu">Graphite beállítások</value>
+                      <value xml:lang="my">Graphite ဖောင့်</value>
                     </prop>
                     <prop oor:name="OptionsPage">
                       <value>%origin%/../../../../../dialogs/GraphiteOptions.xdl</value>
