@@ -30,9 +30,8 @@
 #include "sal/config.h"
 //#include "cppuhelper/bootstrap.hxx" //?
 #include "cppuhelper/implementationentry.hxx"
-#include "cppuhelper/implbase2.hxx"
+#include "cppuhelper/implbase1.hxx"
 #include "cppuhelper/queryinterface.hxx"
-#include "com/sun/star/lang/XLocalizable.hpp"
 #include "com/sun/star/uno/Reference.hxx"
 #include "com/sun/star/uno/XComponentContext.hpp"
 #include "com/sun/star/awt/XControlContainer.hpp"
@@ -68,8 +67,7 @@ namespace org { namespace sil { namespace graphite { class OptionsDialogEventHan
 namespace css = ::com::sun::star;
 
 class org::sil::graphite::OptionsDialogEventHandler:
-    public ::cppu::WeakImplHelper2<
-        css::awt::XContainerWindowEventHandler, css::lang::XLocalizable>
+    public ::cppu::WeakImplHelper1<css::awt::XContainerWindowEventHandler>
 {
 public:
     explicit OptionsDialogEventHandler(css::uno::Reference< css::uno::XComponentContext > const & context);
@@ -77,10 +75,6 @@ public:
     // ::com::sun::star::awt::XContainerWindowEventHandler:
     virtual ::sal_Bool SAL_CALL callHandlerMethod(const css::uno::Reference< css::awt::XWindow > & xWindow, const ::com::sun::star::uno::Any & EventObject, const ::rtl::OUString & MethodName) throw (css::uno::RuntimeException, css::lang::WrappedTargetException);
     virtual css::uno::Sequence< ::rtl::OUString > SAL_CALL getSupportedMethodNames() throw (css::uno::RuntimeException);
-
-    // ::com::sun::star::lang::XLocalizable
-    virtual void SAL_CALL setLocale( const ::com::sun::star::lang::Locale& eLocale ) throw (::com::sun::star::uno::RuntimeException);
-    virtual ::com::sun::star::lang::Locale SAL_CALL getLocale(  ) throw (::com::sun::star::uno::RuntimeException);
 
 private:
     OptionsDialogEventHandler(const org::sil::graphite::OptionsDialogEventHandler &); // not defined
@@ -122,7 +116,6 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
     m_xResource(getResource(context, ::rtl::OUString::createFromAscii("GraphiteMessages"),
                             m_config.locale()), css::uno::UNO_QUERY)
 {
-    setLocale(m_config.locale());
 #ifdef GROOO_DEBUG
     printServiceNames(context->getServiceManager());
     logMsg("OptionsDialogEventHandler constructor with resource %d\n",
@@ -135,7 +128,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
 {
 #ifdef GROOO_DEBUG
     rtl::OString aMethodName;
-    MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, 128);
+    MethodName.convertToString(&aMethodName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
     logMsg("callHandlerMethod(%s)\n", aMethodName.getStr());
 #endif
     if (MethodName.compareTo(EXTERNAL_EVENT) == 0)
@@ -217,7 +210,6 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
 #endif
                 if (xCheckBox.get()->getState())
                 {
-                    graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_True));
 #ifdef SAL_UNX
                     updatedEnvVariable = UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "0");
 #endif
@@ -229,10 +221,10 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                         updatedEnvVariable = (status == ERROR_SUCCESS);
                     }
 #endif
+                    graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_True));
                 }
                 else
                 {
-                    graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_False));
 #ifdef SAL_UNX
                     updatedEnvVariable = UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(), SAL_DISABLE_GRAPHITE, "1");
 #endif
@@ -244,10 +236,10 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                         updatedEnvVariable = (status == ERROR_SUCCESS);
                     }
 #endif
+                    graphitePropertySet.get()->setPropertyValue(GRAPHITE_ENABLED, css::uno::Any(sal_False));
                 }
                 // set the cache size
                 cacheSize = xCacheScrollBar->getValue();
-                graphitePropertySet.get()->setPropertyValue(CACHE_SIZE, css::uno::Any(cacheSize));
                 ::rtl::OString cacheSizeString = ::rtl::OString::valueOf(cacheSize);
 #ifdef SAL_UNX
                 updatedEnvVariable &= UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(),
@@ -257,21 +249,22 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                 status = RegSetValueExA(userEnvKey, SAL_GRAPHITE_CACHE_SIZE, 0,
                             REG_EXPAND_SZ, reinterpret_cast<const BYTE*>(cacheSizeString.getStr()), 2);
                 updatedEnvVariable &= (status == ERROR_SUCCESS);
-    #endif
+#endif
+                graphitePropertySet.get()->setPropertyValue(CACHE_SIZE, css::uno::Any(cacheSize));
                 if (updatedEnvVariable == false)
                 {
                     ::rtl::OUString title;
                     title = getResourceString(m_xResource, "GraphiteOptions.EnableDisableGraphite");
                     ::rtl::OUString msg;
                     msg = getResourceString(m_xResource, "GraphiteOptions.FailedToSetVariable");
-    #ifdef GROOO_DEBUG
+#ifdef GROOO_DEBUG
                     logMsg("Failed to set environment variable\n");
-    #endif
+#endif
                     showMessage(xWindowPeer, title, msg);
                     return sal_False;
                 }
 
-    #ifdef WIN32
+#ifdef WIN32
                 if (userEnvKey)
                 {
                     RegCloseKey(userEnvKey);
@@ -279,23 +272,23 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                     LPCTSTR envChangeParam = "Environment";
                     SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)envChangeParam, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &dMsgResult);
                 }
-    #endif
+#endif
                 css::uno::Reference< css::util::XChangesBatch > batch(m_config.nameAccess(), css::uno::UNO_QUERY);
                 if (batch.is())
                     batch.get()->commitChanges();
-    #ifdef GROOO_DEBUG
+#ifdef GROOO_DEBUG
                 else logMsg("%s Failed to get XChangesBatch", __FUNCTION__);
-    #endif
+#endif
                 if (environmentGraphiteEnabled != xCheckBox.get()->getState())
                 {
                     ::rtl::OUString title;
                     title = getResourceString(m_xResource, "GraphiteOptions.EnableDisableGraphite");
                     ::rtl::OUString msg;
-    #ifdef SAL_UNX
+#ifdef SAL_UNX
                     msg  = getResourceString(m_xResource, "GraphiteOptions.LogoutLogin");
-    #else
+#else
                     msg  = getResourceString(m_xResource, "GraphiteOptions.Restart");
-    #endif
+#endif
                     showMessage(xWindowPeer, title, msg);
                 }
                 return sal_True;
@@ -356,7 +349,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
         {
 #ifdef GROOO_DEBUG
             ::rtl::OString msg;
-            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, 128);
+            e.Message.convertToString(&msg, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
             logMsg("Exception in GraphiteOptions dialog event handler: %s\n", msg.getStr());
 #endif
         }
@@ -450,8 +443,8 @@ org::sil::graphite::OptionsDialogEventHandler::setupGraphiteFontList(const css::
 #ifdef GROOO_DEBUG
                 rtl::OString aFontName;
                 rtl::OString aFontStyleName;
-                fontDescriptors[i].Name.convertToString(&aFontName, RTL_TEXTENCODING_UTF8, 128);
-                fontDescriptors[i].StyleName.convertToString(&aFontStyleName, RTL_TEXTENCODING_UTF8, 128);
+                fontDescriptors[i].Name.convertToString(&aFontName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
+                fontDescriptors[i].StyleName.convertToString(&aFontStyleName, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
                 logMsg("%s (%s) has graphite tables\n", aFontName.getStr(), aFontStyleName.getStr() );
 #endif
                 // ignore duplicate names
@@ -484,21 +477,6 @@ css::uno::Sequence< ::rtl::OUString > SAL_CALL org::sil::graphite::OptionsDialog
 #endif
     return methodNames;
 }
-
-void SAL_CALL org::sil::graphite::OptionsDialogEventHandler::setLocale( const ::com::sun::star::lang::Locale& eLocale ) throw (::com::sun::star::uno::RuntimeException)
-{
-    m_locale = eLocale;
-#ifdef GROOO_DEBUG
-    ::rtl::OString aLang;
-    eLocale.Language.convertToString(&aLang, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
-    logMsg("GraphiteAddOn::setLocale %s\n", aLang.getStr());
-#endif
-}
-::com::sun::star::lang::Locale SAL_CALL org::sil::graphite::OptionsDialogEventHandler::getLocale(  ) throw (::com::sun::star::uno::RuntimeException)
-{
-    return m_locale;
-}
-
 
 // component helper namespace
 namespace org { namespace sil { namespace graphite { namespace optionsdialogeventhandler {
