@@ -93,6 +93,11 @@ private:
     static const ::rtl::OUString CACHE_SCROLL_BAR;
     static const ::rtl::OUString GRAPHITE_ENABLED_LABEL;
     static const ::rtl::OUString GRAPHITE_FONT_LIST;
+    enum {
+        MIN_CACHE_SIZE = 1023,
+        DEFAULT_CACHE_SIZE = 2047,
+        MAX_CACHE_SIZE = 12287
+    };
     // destructor is private and will be called indirectly by the release call
     virtual ~OptionsDialogEventHandler() {}
 
@@ -149,7 +154,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
     {
         try
         {
-            sal_Int32 cacheSize = 2047;
+            sal_Int32 cacheSize = DEFAULT_CACHE_SIZE;
             ::rtl::OUString eventValue = eventObject.get< ::rtl::OUString >();
             css::uno::Reference< css::awt::XCheckBox > xCheckBox = getGraphiteEnabledCheckBox(xWindow);
             css::uno::Reference< css::awt::XControl > xControl(xCheckBox, css::uno::UNO_QUERY);
@@ -180,7 +185,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
             if (pCacheSizeStr)
             {
                 cacheSize = atoi(pCacheSizeStr);
-                if (cacheSize < 1023)
+                if (cacheSize < MIN_CACHE_SIZE)
                     cacheSize = 1023;
             }
 #ifdef _MSC_VER
@@ -240,6 +245,11 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                 }
                 // set the cache size
                 cacheSize = xCacheScrollBar->getValue();
+                if (cacheSize < MIN_CACHE_SIZE)
+                    cacheSize = MIN_CACHE_SIZE;
+                else if (cacheSize > MAX_CACHE_SIZE)
+                    cacheSize = MAX_CACHE_SIZE;
+
                 ::rtl::OString cacheSizeString = ::rtl::OString::valueOf(cacheSize);
 #ifdef SAL_UNX
                 updatedEnvVariable &= UnixEnvironmentSetter::parseFile(UnixEnvironmentSetter::defaultProfile(),
@@ -247,7 +257,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
 #endif
 #ifdef WIN32
                 status = RegSetValueExA(userEnvKey, SAL_GRAPHITE_CACHE_SIZE, 0,
-                            REG_EXPAND_SZ, reinterpret_cast<const BYTE*>(cacheSizeString.getStr()), 2);
+                    REG_EXPAND_SZ, reinterpret_cast<const BYTE*>(cacheSizeString.getStr()), cacheSizeString.getLength() + 1);
                 updatedEnvVariable &= (status == ERROR_SUCCESS);
 #endif
                 graphitePropertySet.get()->setPropertyValue(CACHE_SIZE, css::uno::Any(cacheSize));

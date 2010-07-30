@@ -81,10 +81,30 @@ find_path(OO_BASIS_PROGRAM offapi.rdb
 find_path(OO_SDK_URE_BIN version.ini versionrc 
     PATHS ENV OO_SDK_URE_HOME /usr/lib/ure 
     PATH_SUFFIXES bin DOC "URE bin directory")
+find_file(OO_SDK_VERSION version.ini versionrc
+    PATHS ENV OO_SDK_URE_HOME /usr/lib/ure
+    PATH_SUFFIXES bin DOC "URE version file")
 find_program(UNOPKG unopkg PATHS ENV OFFICE_PROGRAM_PATH /usr/bin
     DOC "OpenOffice.org Extension Manager")
 find_program(ZIP zip)
-find_program(NATIVE2ASCII native2ascii)
+find_program(NATIVE2ASCII native2ascii PATHS ENV JAVA_HOME PATH_SUFFIXES bin)
+
+# check if unopkg supports the -s option
+file(STRINGS ${OO_SDK_VERSION} OO_VERSION_STRING REGEX "OOOBaseVersion=[0-9.]+")
+file(STRINGS ${OO_SDK_VERSION} OO_PRODUCT_MAJOR_STRING REGEX "ProductMajor=[0-9.]+")
+file(STRINGS ${OO_SDK_VERSION} OO_PRODUCT_MINOR_STRING REGEX "ProductMinor=[0-9.]+")
+string(REPLACE "OOOBaseVersion=" "" OO_VERSION ${OO_VERSION_STRING})
+string(REPLACE "ProductMajor=" "" OO_MAJOR_VERSION ${OO_PRODUCT_MAJOR_STRING})
+string(REPLACE "ProductMinor=" "" OO_MINOR_VERSION ${OO_PRODUCT_MINOR_STRING})
+if (${OO_VERSION} GREATER 3.2)
+    set(UNOPKG_OPTIONS -s)
+else (${OO_VERSION} GREATER 3.2) # not sure about the exact minor version to use
+	if ((${OO_MAJOR_VERSION} EQUAL 320) AND (${OO_MINOR_VERSION} GREATER 16))
+		set(UNOPKG_OPTIONS -s)
+	else ((${OO_MAJOR_VERSION} EQUAL 320) AND (${OO_MINOR_VERSION} GREATER 16))
+		set(UNOPKG_OPTIONS "")
+	endif ((${OO_MAJOR_VERSION} EQUAL 320) AND (${OO_MINOR_VERSION} GREATER 16))
+endif (${OO_VERSION} GREATER 3.2)
 
 include_directories ("${OO_SDK_INCLUDE}" ${FREETYPE_INCLUDE_DIRS})
 
@@ -314,7 +334,7 @@ add_custom_target(idlclean
     COMMENT clean the IDL generated headers)
 
 add_custom_target(install
-    COMMAND ${UNOPKG} add --shared ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} --shared ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(uninstall
@@ -322,7 +342,7 @@ add_custom_target(uninstall
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(install_user
-    COMMAND ${UNOPKG} add ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(uninstall_user
@@ -331,7 +351,7 @@ add_custom_target(uninstall_user
 
 add_custom_target(reinstall_user
     COMMAND ${UNOPKG} remove org.sil.graphite.GraphiteOptions
-    COMMAND ${UNOPKG} add ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
     COMMENT reinstall the extension for current user)
 
 add_dependencies(copy_files graphiteooo)
