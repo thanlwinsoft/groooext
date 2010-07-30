@@ -24,7 +24,7 @@ set(OOO_VERSION 3.2) # used for basis directory
 
 # The version number.
 set (graphiteooo_VERSION_MAJOR 0)
-set (graphiteooo_VERSION_MINOR 1)
+set (graphiteooo_VERSION_MINOR 2)
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     # that the directory name contains the version as for a debian package
