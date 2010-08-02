@@ -1,3 +1,9 @@
+openoffice.org-graphite (0.2.2-1) lucid; urgency=low
+
+  * Fix hu encoding issue
+
+ -- Keith Stribley <devel@thanlwinsoft.org>  Mon, 02 Aug 2010 17:37:46 +0630
+
 openoffice.org-graphite (0.2.1-1) lucid; urgency=low
 
   * Release 0.2 with localization for hu and my and cache support

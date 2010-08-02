@@ -22,9 +22,10 @@ enable_language(CXX C)
 
 set(OOO_VERSION 3.2) # used for basis directory
 
-# The version number.
+# The version number. This should be matched by a tag in mercurial
 set (graphiteooo_VERSION_MAJOR 0)
 set (graphiteooo_VERSION_MINOR 2)
+set (graphiteooo_VERSION_PATCH 2)
 
 if (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     # that the directory name contains the version as for a debian package
@@ -39,7 +40,7 @@ else (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
     execute_process(COMMAND hg id -n OUTPUT_VARIABLE MERCURIAL_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(REPLACE "+" "" MERCURIAL_VERSION ${MERCURIAL_VERSION})
-    set(graphiteooo_VERSION_PATCH ${MERCURIAL_VERSION})
+    set(graphiteooo_VERSION_PATCH ${graphiteooo_VERSION_PATCH}.${MERCURIAL_VERSION})
 endif (EXISTS ${PROJECT_SOURCE_DIR}/.hg_archival.txt)
 
 # configure a header file to pass some of the CMake settings
@@ -136,12 +137,15 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_definitions(-DWNT=1 -DCPPU_ENV=msci /wd4290 /wd4800 /W4)
     set(BUILD_SHARED_LIBS on)
-
-    if (${MSVC_VERSION} EQUAL 1500)
-        set(PLATFORM_LIBRARIES msvcr90.dll msvcm90.dll msvcp90.dll Microsoft.VC90.CRT.manifest)
-    else (${MSVC_VERSION} EQUAL 1500)
-        message(SEND_ERROR "Unknown version of MSC ${MSVC_VERSION}")
-    endif (${MSVC_VERSION} EQUAL 1500)
+    set(CMAKE_CXX_FLAGS_DEBUG /MTd)
+    set(CMAKE_CXX_FLAGS_RELEASE /MT)
+    set(CMAKE_CXX_FLAGS_MINSIZEREL /MT)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO /MT)
+#    if (${MSVC_VERSION} EQUAL 1500)
+#        set(PLATFORM_LIBRARIES msvcr90.dll msvcm90.dll msvcp90.dll Microsoft.VC90.CRT.manifest)
+#    else (${MSVC_VERSION} EQUAL 1500)
+#        message(SEND_ERROR "Unknown version of MSC ${MSVC_VERSION}")
+#    endif (${MSVC_VERSION} EQUAL 1500)
 
     find_path(GR_INCLUDE graphite/GrClient.h PATHS ENV SILGRAPHITE_HOME ../silgraphite-2.3.1 ../silgraphite-2.4.0 PATH_SUFFIXES engine/include)
     find_path(GR_WINFONT_INCLUDE WinFont.h PATHS ENV SILGRAPHITE_HOME ../silgraphite-2.3.1 ../silgraphite-2.4.0 PATH_SUFFIXES wrappers/win32)
@@ -301,18 +305,19 @@ add_custom_target(copy_files
     )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_custom_target(redist_files
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcr90.dll ${PROJECT_BINARY_DIR}/msvcr90.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcp90.dll ${PROJECT_BINARY_DIR}/msvcp90.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcm90.dll ${PROJECT_BINARY_DIR}/msvcm90.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/Microsoft.VC90.CRT.manifest ${PROJECT_BINARY_DIR}/Microsoft.VC90.CRT.manifest
-        COMMENT "Redistributable Microsoft DLL files")
-    add_dependencies(copy_files redist_files)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcr90.dll)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcp90.dll)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcm90.dll)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo.pdb)
-    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/Microsoft.VC90.CRT.manifest)
+    
+#    add_custom_target(redist_files
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcr90.dll ${PROJECT_BINARY_DIR}/msvcr90.dll
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcp90.dll ${PROJECT_BINARY_DIR}/msvcp90.dll
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/msvcm90.dll ${PROJECT_BINARY_DIR}/msvcm90.dll
+#        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MSVCDLL_PATH}/Microsoft.VC90.CRT.manifest ${PROJECT_BINARY_DIR}/Microsoft.VC90.CRT.manifest
+#        COMMENT "Redistributable Microsoft DLL files")
+#    add_dependencies(copy_files redist_files)
+#    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcr90.dll)
+#    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcp90.dll)
+#    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/msvcm90.dll)
+#    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo.pdb)
+#    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/Microsoft.VC90.CRT.manifest)
 
 endif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
@@ -324,7 +329,7 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX})
 
-add_custom_target(ooextension ALL COMMAND ${ZIP} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt ${ZIP_FILES}
+add_custom_target(ooextension ALL COMMAND ${ZIP} ${PROJECT_BINARY_DIR}/graphiteooo_${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}_${EXTENSION_PLATFORM}.oxt ${ZIP_FILES}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR} DEPENDS ${L10N_ESCAPED_FILES})
 
 # clean the headers generated from IDL
