@@ -256,9 +256,12 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                                                                     SAL_GRAPHITE_CACHE_SIZE, cacheSizeString.getStr());
 #endif
 #ifdef WIN32
-                status = RegSetValueExA(userEnvKey, SAL_GRAPHITE_CACHE_SIZE, 0,
-                    REG_EXPAND_SZ, reinterpret_cast<const BYTE*>(cacheSizeString.getStr()), cacheSizeString.getLength() + 1);
-                updatedEnvVariable &= (status == ERROR_SUCCESS);
+                if (status == ERROR_SUCCESS)
+                {
+                    status = RegSetValueExA(userEnvKey, SAL_GRAPHITE_CACHE_SIZE, 0,
+                        REG_EXPAND_SZ, reinterpret_cast<const BYTE*>(cacheSizeString.getStr()), cacheSizeString.getLength() + 1);
+                    updatedEnvVariable &= (status == ERROR_SUCCESS);
+                }
 #endif
                 graphitePropertySet.get()->setPropertyValue(CACHE_SIZE, css::uno::Any(cacheSize));
                 if (updatedEnvVariable == false)
@@ -280,7 +283,7 @@ org::sil::graphite::OptionsDialogEventHandler::OptionsDialogEventHandler(css::un
                     RegCloseKey(userEnvKey);
                     DWORD dMsgResult = 0;
                     LPCTSTR envChangeParam = "Environment";
-                    SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)envChangeParam, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &dMsgResult);
+                    SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)envChangeParam, SMTO_NORMAL, 5000, &dMsgResult);
                 }
 #endif
                 css::uno::Reference< css::util::XChangesBatch > batch(m_config.nameAccess(), css::uno::UNO_QUERY);
