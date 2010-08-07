@@ -55,39 +55,51 @@ int main(int argc, char ** argv)
     ::rtl::OUString lang = ::rtl::OUString::createFromAscii("en");
     ::rtl::OUString country = ::rtl::OUString::createFromAscii("GB");
     ::rtl::OUString region;
+    // en-GB
     if (!test(lang, country, region, 0x809, true))
     {
         return 1;
     }
+    // en-MM
     country = ::rtl::OUString::createFromAscii("MM");
     if (!test(lang, country, region, 0x409, false))
         return 2;
-
+    // my-MM
     lang = ::rtl::OUString::createFromAscii("my");
     if (!test(lang, country, region, 0x455, true))
         return 3;
-
+    // ar-MM
     lang = ::rtl::OUString::createFromAscii("ar");
     if (!test(lang, country, region, 0x401, false))
         return 4;
-
+    // ar-SQ
+    country = ::rtl::OUString::createFromAscii("SA");
+    if (!test(lang, country, region, 0x401, true))
+        return 4;
+    // ar-QA
     country = ::rtl::OUString::createFromAscii("QA");
     if (!test(lang, country, region, 0x4001, true))
         return 5;
-
+    // fil-QA
     lang = ::rtl::OUString::createFromAscii("fil");
     if (!test(lang, country, region, 0x464, false))
         return 6;
-
+    // fil-PH
     country = ::rtl::OUString::createFromAscii("PH");
     if (!test(lang, country, region, 0x464, true))
         return 7;
-
+    // es-US
     // check last entry
     lang = ::rtl::OUString::createFromAscii("es");
     country = ::rtl::OUString::createFromAscii("US");
     if (!test(lang, country, region, 0x540A, true))
         return 8;
+
+    // language without entry
+    lang = ::rtl::OUString::createFromAscii("ksw");
+    country = ::rtl::OUString::createFromAscii("MM");
+    if (!test(lang, country, region, 0x409, false))
+        return 9;
     
     return 0;
 }

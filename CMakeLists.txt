@@ -329,7 +329,9 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${PROJECT_BINARY_DIR}/graphiteooo${CMAKE_SHARED_LIBRARY_SUFFIX})
 
-add_custom_target(ooextension ALL COMMAND ${ZIP} ${PROJECT_BINARY_DIR}/graphiteooo_${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}_${EXTENSION_PLATFORM}.oxt ${ZIP_FILES}
+set(OOO_EXTENSION_FILE ${PROJECT_BINARY_DIR}/graphiteooo_${graphiteooo_VERSION_MAJOR}.${graphiteooo_VERSION_MINOR}.${graphiteooo_VERSION_PATCH}_${EXTENSION_PLATFORM}.oxt)
+
+add_custom_target(ooextension ALL COMMAND ${ZIP} ${OOO_EXTENSION_FILE} ${ZIP_FILES}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR} DEPENDS ${L10N_ESCAPED_FILES})
 
 # clean the headers generated from IDL
@@ -339,7 +341,7 @@ add_custom_target(idlclean
     COMMENT clean the IDL generated headers)
 
 add_custom_target(install
-    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} --shared ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} --shared ${OOO_EXTENSION_FILE}
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(uninstall
@@ -347,7 +349,7 @@ add_custom_target(uninstall
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(install_user
-    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${OOO_EXTENSION_FILE}
     COMMENT install the extension system wide - requires admin permissions)
 
 add_custom_target(uninstall_user
@@ -356,7 +358,7 @@ add_custom_target(uninstall_user
 
 add_custom_target(reinstall_user
     COMMAND ${UNOPKG} remove org.sil.graphite.GraphiteOptions
-    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${PROJECT_BINARY_DIR}/graphiteooo_${EXTENSION_PLATFORM}.oxt
+    COMMAND ${UNOPKG} add ${UNOPKG_OPTIONS} ${OOO_EXTENSION_FILE}
     COMMENT reinstall the extension for current user)
 
 add_dependencies(copy_files graphiteooo)

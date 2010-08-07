@@ -374,7 +374,6 @@ osg::getResource(
     sLocation.convertToString(&aLocation, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
     rtl::OUString dialogDir = rtl::OUString::createFromAscii("/dialogs/");
     rtl::OUString resUrl = sLocation + dialogDir;
-    css::uno::Reference< css::resource::XLocale> xLocale(context, css::uno::UNO_QUERY);
 #ifdef GROOO_DEBUG
     ::rtl::OString aLang;
     ::rtl::OString aCountry;

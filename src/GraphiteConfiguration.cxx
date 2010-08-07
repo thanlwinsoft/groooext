@@ -24,12 +24,14 @@
  ************************************************************************/
 
 #include <cassert>
+#include <cstring>
 #include "groooDebug.hxx"
 #include "GraphiteConfiguration.hxx"
 #include "com/sun/star/beans/PropertyValue.hpp"
 #include "com/sun/star/beans/PropertyState.hpp"
 #include "com/sun/star/lang/XMultiComponentFactory.hpp"
 #include "com/sun/star/container/XNameAccess.hpp"
+#include "com/sun/star/resource/XLocale.hpp"
 
 org::sil::graphite::GraphiteConfiguration::GraphiteConfiguration(css::uno::Reference< css::uno::XComponentContext > const & context)
 {
@@ -60,6 +62,21 @@ org::sil::graphite::GraphiteConfiguration::GraphiteConfiguration(css::uno::Refer
     css::uno::Reference< css::uno::XInterface > configAccess =
         mConfigurationProvider.get()->createInstanceWithArguments(
             ::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("com.sun.star.configuration.ConfigurationAccess")), args);
+
+    // TODO find how to get XLocale interface access, since, this way doesn't work
+    css::uno::Reference< css::resource::XLocale > xLocale(configAccess, css::uno::UNO_QUERY);
+    if (xLocale.is())
+    {
+        // not default locale
+        mLocale = xLocale->getDefault();
+#ifdef GROOO_DEBUG
+        ::rtl::OString aLang;
+        ::rtl::OString aCountry;
+        mLocale.Language.convertToString(&aLang, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
+        mLocale.Country.convertToString(&aCountry, RTL_TEXTENCODING_UTF8, OUSTRING_TO_OSTRING_CVTFLAGS);
+        logMsg("have default locale %s-%s", aLang.getStr(), aCountry.getStr());
+#endif
+    }
     css::uno::Reference< css::container::XNameAccess> xLinguisticNameAccess(configAccess, css::uno::UNO_QUERY);
     css::uno::Any localeName = xLinguisticNameAccess->getByName(::rtl::OUString(RTL_CONSTASCII_USTRINGPARAM("UILocale")));
     ::rtl::OUString localeFullName = localeName.get< ::rtl::OUString>();
@@ -83,6 +100,46 @@ org::sil::graphite::GraphiteConfiguration::GraphiteConfiguration(css::uno::Refer
             countryCode = ::rtl::OUString(localeFullName.getStr() + dashIndex + 1,
                                           localeFullName.getLength() - dashIndex - 1);
         }
+    }
+    else if (localeFullName.getLength() == 0)
+    {
+        // TODO there ought to be a way to get this from OOo, but I haven't found it yet
+        // default to English
+        langCode = ::rtl::OUString::createFromAscii("en");
+#ifdef SAL_UNX
+        // make another guess based on the Locale environment variable
+        char tempLang[6] = { '\0','\0','\0','\0','\0','\0' };
+        const char * pLang = getenv("LANG");
+        if (!pLang)
+        {
+            pLang = getenv("LC_MESSAGES");
+        }
+        if (pLang)
+        {
+            size_t langLen = strlen(pLang);
+            const char * dotUtf8 = strstr(pLang, ".utf8");
+            if (dotUtf8)
+            {
+                langLen = dotUtf8 - pLang;
+            }
+            if (langLen == 2)
+            {
+                strncpy(tempLang, pLang, 2);
+                // language only
+                langCode = ::rtl::OUString::createFromAscii(tempLang);
+            }
+            else if (langLen == 5 && pLang[2] == '_')
+            {
+                // OOo uses - not _
+                strncpy(tempLang, pLang, 2);
+                langCode = ::rtl::OUString::createFromAscii(tempLang);
+                strncpy(tempLang, pLang + 3, 2);
+                countryCode = ::rtl::OUString::createFromAscii(tempLang);
+            }
+        }
+#else
+        countryCode = ::rtl::OUString::createFromAscii("US");
+#endif
     }
     else
     {
