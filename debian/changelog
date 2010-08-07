@@ -1,4 +1,4 @@
-openoffice.org-graphite (0.2.3-1ubuntu1) lucid; urgency=low
+openoffice.org-graphite (0.2.3-1) lucid; urgency=low
 
   * Improve handling of default language when UILocale not set
 
