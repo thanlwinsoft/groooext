@@ -1,3 +1,9 @@
+openoffice.org-graphite (0.2.3-1ubuntu1) lucid; urgency=low
+
+  * Improve handling of default language when UILocale not set
+
+ -- Keith Stribley <devel@thanlwinsoft.org>  Sat, 07 Aug 2010 22:09:37 +0700
+
 openoffice.org-graphite (0.2.2-1) lucid; urgency=low
 
   * Fix hu encoding issue
